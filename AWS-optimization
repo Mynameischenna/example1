@@ -1,0 +1,200 @@
+package com.amazonaws.samples;
+
+import java.io.*;
+import java.util.*;
+
+
+import com.amazonaws.services.computeoptimizer.*;
+import com.amazonaws.services.computeoptimizer.model.*;
+
+public class ComputeOptimizerReporter {
+	private AWSComputeOptimizerClientBuilder coClientBuilder;
+	private AWSComputeOptimizer coClient;
+	
+	private ArrayList<ArrayList<String>> instanceData;
+	private ArrayList<ArrayList<String>> volumeData;
+	
+	//File related variables
+	private File outputEC2_CSV;
+	private FileWriter writerEC2;
+	private File outputEBS_CSV;
+	private FileWriter writerEBS;
+	
+	
+	//These are ANSI codes for coloring console text to make it easier to skim through.
+	private static final String GREEN = "\u001B[32m";
+	private static final String NORMAL = "\u001B[0m";
+	private static final String RED = "\u001B[31m";
+	
+	public ComputeOptimizerReporter(String region, String outputFileName_EC2, String outputFileName_EBS) {
+	    try {
+	    	//No need for credentials because this EC2 has role permissions
+			coClientBuilder =  AWSComputeOptimizerClientBuilder.standard();
+		    coClientBuilder.setRegion(region);
+		    coClientBuilder.build();
+		    coClient = coClientBuilder.build();
+		    
+		    //The String[] will be of size 4 with indexes holding strings representing:
+		    //0: ID, 1: User, 2: Finding, 3: Usage Metrics
+		    instanceData = new ArrayList<ArrayList<String>>();
+		    volumeData = new ArrayList<ArrayList<String>>();
+		    
+		    //Note: Only give the filename. Do not include any file type. This defaults to CSV.
+		    outputEC2_CSV = new File(outputFileName_EC2+".csv");
+		    writerEC2 = new FileWriter(outputEC2_CSV);
+		    outputEBS_CSV = new File(outputFileName_EBS+".csv");
+		    writerEBS = new FileWriter(outputEBS_CSV);
+		    
+	    }catch(IOException i) {
+	    	System.out.println("IO Exception thrown from ComputeOptimizerReporter object constructor. Likely a FileWriter issue");
+	    	i.printStackTrace();
+	    }
+	    
+	    gatherEC2Results();
+	    gatherEBSResults();
+	}//end constructor method
+	
+	public void gatherEBSResults() {
+		
+	}
+	
+	public void gatherEC2Results() {
+		 GetEC2InstanceRecommendationsRequest request = new GetEC2InstanceRecommendationsRequest();
+         GetEC2InstanceRecommendationsResult result = coClient.getEC2InstanceRecommendations(request);
+         
+         // Process all EC2 instance recommendations into the instanceData ArrayList
+         for (int index = 0; index < result.getInstanceRecommendations().size(); index++) {
+        	 //0: Instance Name, 1: ID, 2: User, 3: Finding, 4: Finding Reason Codes
+        	 
+        	 //Need to find whichever tag holds the User value separately --its index changes between instances
+        	 int userTagIndex = -1;
+        	 for(int index2 = 0; index2 < result.getInstanceRecommendations().get(index).getTags().size(); index2++) {
+				 if(result.getInstanceRecommendations().get(index).getTags().get(index2).getKey().equalsIgnoreCase("User")) {
+					 userTagIndex = index2;
+				 }
+			 }//end inner for loop
+        	 
+        	 //Create the data
+        	 ArrayList<String> data = new ArrayList<String>();
+        			 data.add(result.getInstanceRecommendations().get(index).getInstanceName());
+        			 data.add(result.getInstanceRecommendations().get(index).getInstanceArn().substring(("arn:aws:ec2:us-east-1:563003501456:instance/").length()));
+        			 data.add("No User Found");
+        			 data.add(result.getInstanceRecommendations().get(index).getFinding());
+        	
+        	 //put all reasoning codes into the same string for ease of reading
+        	 String reasons = "";
+             for(int reasonIndex = 0; reasonIndex < result.getInstanceRecommendations().get(index).getFindingReasonCodes().size(); reasonIndex++) {
+        		 reasons += result.getInstanceRecommendations().get(index).getFindingReasonCodes().get(reasonIndex) + " | ";
+        	 }
+             reasons.strip();
+             data.add(reasons);
+             
+        	 //Account for no user tag being found
+        	 if(userTagIndex >= 0) {
+        		 data.set(2, result.getInstanceRecommendations().get(index).getTags().get(userTagIndex).getValue());
+        	 }
+        	 
+        	 //Add on the unknown number of recommendation options with their instance types, migration efforts, and potential savings
+        	 for(int index3 = 0; index3 < result.getInstanceRecommendations().get(index).getRecommendationOptions().size(); index3++) {
+        		 String recommendationOptions = result.getInstanceRecommendations().get(index).getRecommendationOptions().get(index3).getInstanceType().toString()
+        				 +" | "+result.getInstanceRecommendations().get(index).getRecommendationOptions().get(index3).getMigrationEffort().toString()
+        				 +" | ";
+        		 //Get the actual savings in dollars
+        		 if(result.getInstanceRecommendations().get(index).getRecommendationOptions().get(index3).getSavingsOpportunity() != null) {
+        			 recommendationOptions += "$" + result.getInstanceRecommendations().get(index)
+        					 .getRecommendationOptions().get(index3)
+        					 .getSavingsOpportunity().getEstimatedMonthlySavings().getValue();
+        		 }else {
+        			 recommendationOptions += "No savings"; 
+        		 }
+        		 
+        		 data.add(recommendationOptions);
+        	 }//end inner for loop
+        	 
+        	 //Add the data to the list of other data 
+        	 instanceData.add(data);
+         }//end outer for loop
+         
+         //Remove any instances which have finding == "optimized" (index 3)
+         for(int index = 0; index < instanceData.size(); index++) {
+        	 if(instanceData.get(index).get(3).equals("OPTIMIZED")){
+        		 instanceData.remove(index);
+        		 index--;
+        	 }
+         }
+	}//end gatherEC2Results method
+	
+	//Write the instanceData to a CSV file 
+		public File writeEC2ToCSV() {
+			try {
+				String colNames = "Instance Name,Instance ID,User Tag,"
+						+ "Utilization Finding,Reasoning,"
+						+ "Recommendation Options (Type | Migration Effort | Potential Monthly Savings)\n";
+				writerEC2.write(colNames);
+				
+				//Iterate through and print
+				for(int index = 0; index < instanceData.size(); index++) {
+					
+					for(int index2 = 0; index2 < instanceData.get(index).size(); index2++) {
+						writerEC2.write(instanceData.get(index).get(index2) + ",");
+					}//end inner for loop
+					
+					writerEC2.write("\n");
+				}//end outer for loop
+				
+				writerEC2.close();
+			}catch(IOException i) {
+				System.out.println("IO Exception thrown from ComputeOptimizerReporter writeEC2ToCSV method.");
+			}
+			return outputEC2_CSV;
+		}
+	
+	
+	
+	
+	    public void printEC2InstanceRecommendations() {
+	    	System.out.println(GREEN + "==============EC2 Recommendations==============\n" + NORMAL);
+	    	
+	    	try {
+	            GetEC2InstanceRecommendationsRequest request = new GetEC2InstanceRecommendationsRequest();
+	            GetEC2InstanceRecommendationsResult result = coClient.getEC2InstanceRecommendations(request);
+	            
+	            // Process the EC2 instance recommendations
+	            for (InstanceRecommendation recommendation : result.getInstanceRecommendations()) {
+	            	System.out.println("EC2 Instance ID: " + recommendation.getInstanceArn());
+	            	System.out.println("Name: " + recommendation.getInstanceName());
+	            	
+	            	if(!recommendation.getFinding().equals("OPTIMIZED")) {
+	            		System.out.println(RED + "Finding: " + recommendation.getFinding() + NORMAL);
+	            	}else {
+	            		System.out.println(GREEN + "Finding: " + recommendation.getFinding() + NORMAL);
+	            	}
+	            	System.out.println("Usage metrics: " + recommendation.getUtilizationMetrics());
+	                System.out.println("Options: " + recommendation.getRecommendationOptions());
+	                System.out.println("---------------------------------------");
+	            }//end recommendation for loop
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }//end try/catch block
+	    }//end printEC2InstanceRecommendations method
+	    
+	    public void printEBSVolumeRecommendations() {
+	    	System.out.println(GREEN + "==============EBS Recommendations==============\n" + NORMAL);
+	    	
+	        try {
+	            GetEBSVolumeRecommendationsRequest request = new GetEBSVolumeRecommendationsRequest();
+	            GetEBSVolumeRecommendationsResult result = coClient.getEBSVolumeRecommendations(request);
+
+	            // Process the EBS volume recommendations
+	            for (VolumeRecommendation recommendation : result.getVolumeRecommendations()) {
+	                System.out.println("EBS Volume ID: " + recommendation.getVolumeArn());
+	                System.out.println("Options: " + recommendation.getVolumeRecommendationOptions());
+	                System.out.println("------------------------------");
+	            }//end recommendation for loop
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }//end try/catch block
+	    }//end printEBSVolumeRecommendations method
+
+
+}//end ComputeOptimizerReporter class
