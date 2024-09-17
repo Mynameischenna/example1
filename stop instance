@@ -1,0 +1,76 @@
+STOP INSTANCE
+
+
+
+To create an alarm that triggers when you stop your EC2 instance, you'll use Amazon EventBridge (formerly CloudWatch Events) rather than CloudWatch metrics. Here's how to set up the alarm from scratch using EventBridge and SNS to send you a notification when the instance is stopped.
+
+Steps to Set Up an Alarm When an EC2 Instance Stops
+1. Create an SNS Topic for Notifications
+Go to the SNS Console:
+
+In the AWS Management Console, search for SNS and select it.
+Create a Topic:
+
+Click on Create Topic.
+Choose Standard as the topic type.
+Enter a name for the topic, like EC2InstanceStopTopic.
+Click Create Topic.
+Create a Subscription:
+
+After creating the topic, click Create Subscription.
+Choose a Protocol for how you want to receive notifications (e.g., Email, SMS, etc.).
+Enter the Endpoint (your email or phone number).
+Click Create Subscription.
+You’ll need to confirm the subscription via email or SMS.
+
+
+2. Create an EventBridge Rule to Monitor EC2 State Changes
+Go to the EventBridge Console:
+
+In the AWS Management Console, search for EventBridge and select it.
+Create a Rule:
+
+Click on Rules in the left sidebar.
+Click Create Rule.
+Configure Rule Details:
+
+Enter a name for the rule, such as EC2StopAlarm.
+Optionally, add a description: "Trigger when an EC2 instance stops."
+Define the Event Pattern:
+
+In the Event Source section, select AWS services.
+In the Service Name dropdown, select EC2.
+In the Event Type dropdown, select EC2 Instance State-change Notification.
+In the Specific state(s) section, choose stopped.
+This setup ensures that the rule triggers when your EC2 instance transitions to the stopped state.
+
+3. Set Up the Target for Your Event (SNS Notification)
+Choose Target:
+
+In the Target section, choose SNS topic as the target.
+Select the SNS topic you created earlier (EC2InstanceStopTopic).
+Click Create to complete the rule setup.
+
+4. Test Your Setup
+Stop an EC2 Instance:
+
+Go to the EC2 Console.
+Select an instance and stop it by going to Actions > Instance State > Stop Instance.
+Receive Notification:
+
+After stopping the instance, within a few minutes, you should receive an email, SMS, or whichever protocol you chose in the SNS setup.
+Overview of How It Works
+EventBridge will monitor the state of your EC2 instance.
+When your instance enters the "stopped" state, an event is triggered and sent to the SNS topic.
+SNS then sends a notification to the email, phone number, or endpoint that you specified.
+Conclusion
+This process allows you to get an alarm (notification) when your EC2 instance stops. The key is to use EventBridge for the state-change event and SNS to send the notification.
+
+
+
+
+
+
+
+
+
