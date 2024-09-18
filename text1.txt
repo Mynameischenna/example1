@@ -11,3 +11,16 @@ hello i am chenna
   "default": "Instance {{instanceId}} has entered the state: {{state}} at {{time}}.",
   "email": "ALERT: EC2 instance {{instanceId}} has been stopped at {{time}}. Please check the instance status immediately!"
 }
+
+{
+  "default": "Instance {{instanceId}} has entered the state: {{state}} at {{time}}.",
+  "email": "ALERT: EC2 instance {{instanceId}} has been stopped at {{time}}. Please check the instance status immediately!"
+}
+{
+  "source": ["aws.ec2"],
+  "detail-type": ["EC2 Instance State-change Notification"],
+  "detail": {
+    "state": ["stopped"],
+    "instance-id": ["i-0488b8da2a2809c51"]
+  }
+}
