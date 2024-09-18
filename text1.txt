@@ -1,1 +1,7 @@
+
 hello i am chenna 
+
+{
+  "default": "Instance {{instanceId}} has entered the state: {{state}} at {{time}}.",
+  "email": "ALERT: EC2 instance {{instanceId}} has been stopped at {{time}}. Please check the instance status immediately!"
+}
