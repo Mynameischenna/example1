@@ -1,3 +1,24 @@
+import json
+
+def lambda_handler(event, context):
+    # Simulate getting the instance ID (you would retrieve this from the event in practice)
+    instance_id = event['detail']['instance-id']  # Extracted from the event that triggered this Lambda
+    
+    # Prepare the output structure
+    output = {
+        "detail": {
+            "instance-id": instance_id
+        }
+    }
+
+    # Return the output
+    return {
+        'statusCode': 200,
+        'body': json.dumps(output)
+    }
+
+
+
 {
   "errorMessage": "'NoneType' object is not subscriptable",
   "errorType": "TypeError",
