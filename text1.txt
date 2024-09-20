@@ -1,3 +1,78 @@
+
+{
+  "statusCode": 200,
+  "body": "{\"detail\": {\"instance-id\": \"i-0488b8da2a2809c51\"}}"
+}
+output:
+{
+  "errorMessage": "'detail'",
+  "errorType": "KeyError",
+  "requestId": "bba3f772-b551-4e65-a291-ec06a01b78bc",
+  "stackTrace": [
+    "  File \"/var/task/lambda_function.py\", line 37, in lambda_handler\n    instance_id = event['detail']['instance-id']  # Extracted from the event that triggered this Lambda\n"
+  ]
+}
+code:
+
+import boto3
+import time
+import os
+import json
+
+# Clients for SNS and EC2
+sns_client = boto3.client('sns')
+ec2_client = boto3.client('ec2')
+
+# Function to send email via SNS
+def send_email(instance_id, escalation=False):
+    topic_arn = os.environ['SNS_TOPIC_ARN']  # SNS Topic ARN from environment variable
+    subject = f"Instance {instance_id} {'Escalation' if escalation else ''} Alert"
+    body = f"Instance {instance_id} is {'still' if escalation else ''} in a stopped state."
+
+    response = sns_client.publish(
+        TopicArn=topic_arn,
+        Message=body,
+        Subject=subject
+    )
+
+    return response
+
+# Function to check the instance state
+def check_instance_state(instance_id):
+    response = ec2_client.describe_instance_status(InstanceIds=[instance_id])
+    if response['InstanceStatuses']:
+        instance_state = response['InstanceStatuses'][0]['InstanceState']['Name']
+        return instance_state
+    else:
+        return None  # Instance not found or no state available
+
+
+def lambda_handler(event, context):
+    # Simulate getting the instance ID (you would retrieve this from the event in practice)
+    instance_id = event['detail']['instance-id']  # Extracted from the event that triggered this Lambda
+    # Send the initial email when the instance is first stopped
+    send_email(instance_id)
+    
+    
+    # Prepare the output structure
+    output = {
+        "detail": {
+            "instance-id": instance_id
+        }
+    }
+
+    # Return the output
+    return {
+        'statusCode': 200,
+        'body': json.dumps(output)
+    }
+
+
+
+
+
+
+-------
 import json
 
 def lambda_handler(event, context):
