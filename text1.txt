@@ -1,3 +1,26 @@
+{
+  "Comment": "State machine to handle EC2 instance stop alerts and escalation",
+  "StartAt": "InitialCheck",
+  "States": {
+    "InitialCheck": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:<region>:<account-id>:function:<InitialEmailFunction>",
+      "Next": "Wait1Hour"
+    },
+    "Wait1Hour": {
+      "Type": "Wait",
+      "Seconds": 3600,
+      "Next": "CheckInstanceState"
+    },
+    "CheckInstanceState": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:<region>:<account-id>:function:<RecheckEmailFunction>",
+      "End": true
+    }
+  }
+}
+
+
 Test Event Name
 event1
 
