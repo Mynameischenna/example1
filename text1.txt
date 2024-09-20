@@ -41,3 +41,23 @@ hello i am chenna
     "instance-id": ["i-0488b8da2a2809c51"]
   }
 }
+Test Event Name
+chennaStopInstance
+
+Response
+{
+  "errorMessage": "Handler 'Hello::handleRequest' missing on module 'example'",
+  "errorType": "Runtime.HandlerNotFound",
+  "requestId": "",
+  "stackTrace": []
+}
+
+Function Logs
+[ERROR] Runtime.HandlerNotFound: Handler 'Hello::handleRequest' missing on module 'example'
+Traceback (most recent call last):INIT_REPORT Init Duration: 310.36 ms	Phase: invoke	Status: error	Error Type: Runtime.Unknown
+START RequestId: 84cb5abc-c4c1-4409-b195-b34f955f5c32 Version: $LATEST
+END RequestId: 84cb5abc-c4c1-4409-b195-b34f955f5c32
+REPORT RequestId: 84cb5abc-c4c1-4409-b195-b34f955f5c32	Duration: 341.22 ms	Billed Duration: 342 ms	Memory Size: 512 MB	Max Memory Used: 42 MB	Status: error	Error Type: Runtime.Unknown
+
+Request ID
+84cb5abc-c4c1-4409-b195-b34f955f5c32
