@@ -61,3 +61,59 @@ REPORT RequestId: 84cb5abc-c4c1-4409-b195-b34f955f5c32	Duration: 341.22 ms	Bille
 
 Request ID
 84cb5abc-c4c1-4409-b195-b34f955f5c32
+
+
+
+import boto3
+import time
+import os
+
+# Clients for SNS and EC2
+sns_client = boto3.client('sns')
+ec2_client = boto3.client('ec2')
+
+# Function to send email via SNS
+def send_email(instance_id, escalation=False):
+    topic_arn = os.environ['SNS_TOPIC_ARN']  # SNS Topic ARN from environment variable
+    subject = f"Instance {instance_id} {'Escalation' if escalation else ''} Alert"
+    body = f"Instance {instance_id} is {'still' if escalation else ''} in a stopped state."
+
+    response = sns_client.publish(
+        TopicArn=topic_arn,
+        Message=body,
+        Subject=subject
+    )
+
+    return response
+
+# Function to check the instance state
+def check_instance_state(instance_id):
+    response = ec2_client.describe_instance_status(InstanceIds=[instance_id])
+    if response['InstanceStatuses']:
+        instance_state = response['InstanceStatuses'][0]['InstanceState']['Name']
+        return instance_state
+    else:
+        return None  # Instance not found or no state available
+
+# Lambda handler function
+def lambda_handler(event, context):
+    # Get instance ID from event (triggered by EventBridge)
+    instance_id = event['detail']['instance-id']
+    
+    # Send the initial email when the instance is first stopped
+    send_email(instance_id)
+    
+    # Wait for 1 hour
+    time.sleep(3600)  # 3600 seconds = 1 hour
+    
+    # Check the instance state again after 1 hour
+    instance_state = check_instance_state(instance_id)
+    
+    # If the instance is still in 'stopped' state, send the escalation email
+    if instance_state == 'stopped':
+        send_email(instance_id, escalation=True)
+    
+    return {
+        'statusCode': 200,
+        'body': f'Email sent successfully for instance {instance_id}.'
+    }
