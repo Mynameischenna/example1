@@ -1,3 +1,14 @@
+{
+  "errorMessage": "'NoneType' object is not subscriptable",
+  "errorType": "TypeError",
+  "requestId": "bd316927-5a89-481c-89e9-f940a8a129ef",
+  "stackTrace": [
+    "  File \"/var/task/lambda_function.py\", line 36, in lambda_handler\n    instance_id = event['detail']['instance-id']\n"
+  ]
+}
+
+
+
 The principal states.amazonaws.com is not authorized to assume the provided role. (role: arn:aws:iam::563003501456:role/gwf/apps/compliance/ComplianceLambdaEC2Chenna1)
 
 {
