@@ -1,3 +1,20 @@
+Test Event Name
+event1
+
+Response
+{
+  "errorType": "Sandbox.Timedout",
+  "errorMessage": "RequestId: ec3fd342-3d6f-480f-963f-42bf39870b2f Error: Task timed out after 3.00 seconds"
+}
+
+Function Logs
+START RequestId: ec3fd342-3d6f-480f-963f-42bf39870b2f Version: $LATEST
+END RequestId: ec3fd342-3d6f-480f-963f-42bf39870b2f
+REPORT RequestId: ec3fd342-3d6f-480f-963f-42bf39870b2f	Duration: 3000.00 ms	Billed Duration: 3000 ms	Memory Size: 128 MB	Max Memory Used: 89 MB	Init Duration: 455.70 ms	Status: timeout
+
+Request ID
+ec3fd342-3d6f-480f-963f-42bf39870b2f
+
 {
   "version": "0",
   "id": "c8c7bf83-0ce5-4b94-953e-0d332c7611b5",
