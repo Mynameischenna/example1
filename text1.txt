@@ -1,5 +1,45 @@
 https://app.diagrams.net/?src=about
 
+import boto3
+import os
+
+# Initialize clients
+ec2_client = boto3.client('ec2')
+sns_client = boto3.client('sns')
+
+# Get SNS topic ARN and instance ID from environment variables
+SNS_TOPIC_ARN = os.environ['SNS_TOPIC_ARN']
+INSTANCE_ID = os.environ['INSTANCE_ID']
+
+def lambda_handler(event, context):
+    try:
+        # Describe instance to check status
+        response = ec2_client.describe_instances(InstanceIds=[INSTANCE_ID])
+        
+        # Get instance state
+        state = response['Reservations'][0]['Instances'][0]['State']['Name']
+        
+        if state == 'stopped':
+            # If instance is stopped, start it
+            ec2_client.start_instances(InstanceIds=[INSTANCE_ID])
+            print(f"Starting instance {INSTANCE_ID}")
+        else:
+            print(f"Instance {INSTANCE_ID} is already in '{state}' state")
+    
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        
+        # Send error message via SNS
+        sns_client.publish(
+            TopicArn=SNS_TOPIC_ARN,
+            Subject='Error starting EC2 instance',
+            Message=f"Failed to start instance {INSTANCE_ID}. Error: {str(e)}"
+        )
+        
+        # Optionally re-raise the error if you want Lambda to retry or fail
+        raise e
+
+
 
 import boto3
 import os
