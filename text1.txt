@@ -1,5 +1,7 @@
 https://app.diagrams.net/?src=about
 
+Starting instance i-0488b8da2a2809c51 {'StartingInstances': [{'CurrentState': {'Code': 0, 'Name': 'pending'}, 'InstanceId': 'i-0488b8da2a2809c51', 'PreviousState': {'Code': 80, 'Name': 'stopped'}}], 'ResponseMetadata': {'RequestId': 'a87a4724-fa0c-4e00-8938-ff9c681ad703', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amzn-requestid': 'a87a4724-fa0c-4e00-8938-ff9c681ad703', 'cache-control': 'no-cache, no-store', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'content-type': 'text/xml;charset=UTF-8', 'content-length': '411', 'date': 'Sat, 21 Sep 2024 10:50:18 GMT', 'server': 'AmazonEC2'}, 'RetryAttempts': 0}}
+
 import boto3
 import os
 
