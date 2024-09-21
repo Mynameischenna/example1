@@ -1,4 +1,19 @@
 https://app.diagrams.net/?src=about
+INIT_START Runtime Version: python:3.12.v30	Runtime Version ARN: arn:aws:lambda:us-east-1::runtime:acd6500d0e3f6a085fb07933e3472ed6e58360d19ec5dd91bc7c7e8ad119de42
+START RequestId: ccf2649f-086a-441a-8309-9960e57577f2 Version: $LATEST
+Current state of instance i-0488b8da2a2809c51: stopped
+Starting instance i-0488b8da2a2809c51
+Current state after start attempt: stopped
+Instance i-0488b8da2a2809c51 is still stopped, retrying...
+Current state after start attempt: stopped
+Instance i-0488b8da2a2809c51 is still stopped, retrying...
+Current state after start attempt: stopped
+Instance i-0488b8da2a2809c51 is still stopped, retrying...
+Current state after start attempt: stopped
+Instance i-0488b8da2a2809c51 is still stopped, retrying...
+END RequestId: ccf2649f-086a-441a-8309-9960e57577f2
+REPORT RequestId: ccf2649f-086a-441a-8309-9960e57577f2	Duration: 41737.89 ms	Billed Duration: 41738 ms	Memory Size: 128 MB	Max Memory Used: 87 MB	Init Duration: 567.85 ms	
+
 
 import boto3
 import os
