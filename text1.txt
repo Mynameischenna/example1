@@ -1,3 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: LambdaExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+              - Effect: Allow
+                Action:
+                  - 'ec2:StartInstances'
+                  - 'ec2:StopInstances'
+                Resource: '*'
+
+  # Lambda Function
+  MyLambdaFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties: 
+      Handler: 'index.lambda_handler'
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code: 
+        S3Bucket: 'your-lambda-code-bucket'
+        S3Key: 'your-lambda-code.zip'
+      Runtime: 'python3.9'
+      Timeout: 120
+      MemorySize: 128
+
+  # CloudWatch log group for Lambda
+  LambdaLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${MyLambdaFunction}'
+      RetentionInDays: 14
+
+
+
+
 {
   "Version": "2012-10-17",
   "Statement": [
