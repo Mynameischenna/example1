@@ -5,6 +5,102 @@ import os
 sns_client = boto3.client('sns')
 ec2_client = boto3.client('ec2')
 
+# Function to send escalation email via SNS
+def send_escalation_email(instance_id, instance_name):
+    topic_arn = os.environ['SNS_TOPIC_ARN']  # SNS Topic ARN from environment variable
+    subject = f"Escalation Alert: Instance {instance_name} ({instance_id})"
+    body = f"Instance {instance_name} ({instance_id}) is still in a stopped state after 1 hour."
+
+    sns_client.publish(
+        TopicArn=topic_arn,
+        Message=body,
+        Subject=subject
+    )
+
+# Function to check if the instance is still stopped
+def is_instance_stopped(instance_id):
+    response = ec2_client.describe_instances(InstanceIds=[instance_id])
+    
+    if response['Reservations']:
+        instance = response['Reservations'][0]['Instances'][0]
+        instance_state = instance['State']['Name']
+        return instance_state == 'stopped'
+    return False
+
+def lambda_handler(event, context):
+    # Extract instance ID and name from the event
+    instance_id = event['instance-id']
+    instance_name = event['instance-name']
+
+    # Check if the instance is still stopped
+    if is_instance_stopped(instance_id):
+        # Send escalation email
+        send_escalation_email(instance_id, instance_name)
+
+    return {
+        "message": f"Escalation email sent for instance {instance_id}."
+    }
+
+
+
+import boto3
+import os
+
+# Clients for SNS and EC2
+sns_client = boto3.client('sns')
+ec2_client = boto3.client('ec2')
+
+# Function to send an initial email via SNS
+def send_email(instance_id, instance_name):
+    topic_arn = os.environ['SNS_TOPIC_ARN']  # SNS Topic ARN from environment variable
+    subject = f"Instance {instance_name} ({instance_id}) Alert"
+    body = f"Instance {instance_name} ({instance_id}) is in a stopped state."
+
+    sns_client.publish(
+        TopicArn=topic_arn,
+        Message=body,
+        Subject=subject
+    )
+
+# Function to get instance name
+def get_instance_name(instance_id):
+    response = ec2_client.describe_instances(InstanceIds=[instance_id])
+    
+    if response['Reservations']:
+        instance = response['Reservations'][0]['Instances'][0]
+        instance_name = None
+        for tag in instance.get('Tags', []):
+            if tag['Key'] == 'Name':
+                instance_name = tag['Value']
+                break
+        return instance_name
+    return None
+
+def lambda_handler(event, context):
+    # Extract instance ID from the event
+    instance_id = event['detail']['instance-id']
+
+    # Get instance name
+    instance_name = get_instance_name(instance_id) or "Unnamed Instance"
+
+    # Send the email
+    send_email(instance_id, instance_name)
+
+    return {
+        "message": f"Initial email sent for instance {instance_id}.",
+        "instance-id": instance_id,
+        "instance-name": instance_name
+    }
+
+
+
+import boto3
+import os
+
+# Clients for SNS and EC2
+sns_client = boto3.client('sns')
+ec2_client = boto3.client('ec2')
+
 # Global dictionary to track sent emails
 sent_emails = {}
 
