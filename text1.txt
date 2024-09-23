@@ -1,3 +1,82 @@
+import boto3
+import os
+
+# Clients for SNS and EC2
+sns_client = boto3.client('sns')
+ec2_client = boto3.client('ec2')
+
+# Global dictionary to track sent emails
+sent_emails = {}
+
+# Function to send email via SNS
+def send_email(instance_id, instance_name, escalation=False):
+    topic_arn = os.environ['SNS_TOPIC_ARN']  # SNS Topic ARN from environment variable
+    subject = f"Instance {instance_name} ({instance_id}) {'Escalation' if escalation else ''} Alert"
+    body = f"Instance {instance_name} ({instance_id}) is {'still' if escalation else ''} in a stopped state."
+
+    sns_client.publish(
+        TopicArn=topic_arn,
+        Message=body,
+        Subject=subject
+    )
+
+# Function to get the instance name and state
+def get_instance_name_and_state(instance_id):
+    response = ec2_client.describe_instances(InstanceIds=[instance_id])
+    if response['Reservations']:
+        instance = response['Reservations'][0]['Instances'][0]
+        
+        # Get instance state
+        instance_state = instance['State']['Name']
+        
+        # Retrieve the instance name from tags
+        instance_name = None
+        for tag in instance.get('Tags', []):
+            if tag['Key'] == 'Name':
+                instance_name = tag['Value']
+                break
+        
+        return instance_name, instance_state
+    return None, None  # Instance not found or no tags available
+
+def lambda_handler(event, context):
+    # Extract instance ID directly from the event
+    instance_id = event['detail']['instance-id']
+
+    # Get instance name and state
+    instance_name, instance_state = get_instance_name_and_state(instance_id)
+    
+    if not instance_name:
+        instance_name = "Unnamed Instance"
+
+    # Check if this instance ID has already had emails sent
+    if instance_id not in sent_emails:
+        sent_emails[instance_id] = {'initial_sent': False, 'escalation_sent': False}
+
+    # Send the initial email when the instance is first stopped
+    if instance_state == 'stopped' and not sent_emails[instance_id]['initial_sent']:
+        send_email(instance_id, instance_name)
+        sent_emails[instance_id]['initial_sent'] = True
+
+    # If the instance is still in a stopped state, send the escalation email
+    if instance_state == 'stopped' and not sent_emails[instance_id]['escalation_sent']:
+        send_email(instance_id, instance_name, escalation=True)
+        sent_emails[instance_id]['escalation_sent'] = True
+
+    # Prepare the output structure
+    output = {
+        "detail": {
+            "instance-id": instance_id,
+            "instance-name": instance_name
+        }
+    }
+
+    # Return the output with instance name and ID
+    return output
+
+
+
+
 https://app.diagrams.net/?src=about
 INIT_START Runtime Version: python:3.12.v30	Runtime Version ARN: arn:aws:lambda:us-east-1::runtime:acd6500d0e3f6a085fb07933e3472ed6e58360d19ec5dd91bc7c7e8ad119de42
 START RequestId: ccf2649f-086a-441a-8309-9960e57577f2 Version: $LATEST
