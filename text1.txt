@@ -1,3 +1,28 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Start*",
+        "ec2:Stop*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+
+
+
 
 {'StartingInstances': [{'CurrentState': {'Code': 0, 'Name': 'pending'}, 'InstanceId': 'i-0488b8da2a2809c51', 'PreviousState': {'Code': 80, 'Name': 'stopped'}}], 'ResponseMetadata': {'RequestId': '45922bac-072d-484d-83ba-50770d2da1ee', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amzn-requestid': '45922bac-072d-484d-83ba-50770d2da1ee', 'cache-control': 'no-cache, no-store', 'strict-transport-security': 'max-age=31536000; includeSubDomains', 'content-type': 'text/xml;charset=UTF-8', 'content-length': '411', 'date': 'Mon, 23 Sep 2024 13:54:50 GMT', 'server': 'AmazonEC2'}, 'RetryAttempts': 0}}
 END RequestId: 82f2b6c6-2835-4335-b43b-33c52667dd08
