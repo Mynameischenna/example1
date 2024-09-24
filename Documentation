@@ -1,0 +1,187 @@
+Monitoring Stopped EC2 Instances with AWS EventBridge and Step Functions
+Objective:
+You want to monitor an EC2 instance using AWS EventBridge, trigger a Step Function when the instance stops, and then execute two Lambda functions:
+
+First Lambda: Send an email immediately when the instance stops.
+Second Lambda: Wait for 1 hour, check if the instance is still stopped, and if so, send an escalation email.
+Components Involved:
+AWS EventBridge: To detect the EC2 Stop state.
+AWS Step Functions: To manage the workflow.
+Two AWS Lambda Functions:
+First Lambda: Sends an immediate email when the instance stops.
+Second Lambda: Sends an escalation email after 1 hour if the instance remains stopped.
+Amazon SNS (Simple Notification Service): For sending emails.
+IAM Roles and Policies: To grant the necessary permissions for EventBridge, Step Functions, and Lambda.
+Step 1: Create SNS Topics for Email Notifications
+Navigate to the Amazon SNS console.
+Create two SNS topics:
+Immediate Alert Topic (for the first Lambda to send an email when the instance stops).
+Escalation Alert Topic (for the second Lambda to send an email after 1 hour).
+Subscribe your email address to both topics.
+Step 2: Create Lambda Functions
+Lambda Function 1: Sends an Immediate Email
+Go to the Lambda Console and create a new function.
+Name it SendImmediateAlertLambda.
+Assign the appropriate permissions to allow publishing messages to the SNS topic.
+Add this Python (or Node.js, depending on preference) code for the function:
+Python Code Example:
+
+python
+Copy code
+import json
+import boto3
+
+sns = boto3.client('sns')
+
+def lambda_handler(event, context):
+    # Retrieve the SNS topic ARN
+    sns_topic_arn = 'arn:aws:sns:REGION:ACCOUNT_ID:ImmediateAlertTopic'
+    
+    # Create a message
+    message = f"EC2 instance {event['detail']['instance-id']} has been stopped."
+    
+    # Publish the message to SNS
+    response = sns.publish(
+        TopicArn=sns_topic_arn,
+        Message=message,
+        Subject='EC2 Instance Stopped',
+    )
+    
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Immediate Alert Sent!')
+    }
+Deploy the function.
+Lambda Function 2: Sends an Escalation Email After 1 Hour
+Create another Lambda function and name it SendEscalationAlertLambda.
+Assign the appropriate permissions to allow publishing messages to the SNS topic.
+Add the following code to check if the instance is still stopped and send the escalation email:
+Python Code Example:
+
+python
+Copy code
+import boto3
+import json
+
+ec2 = boto3.client('ec2')
+sns = boto3.client('sns')
+
+def lambda_handler(event, context):
+    instance_id = event['detail']['instance-id']
+    
+    # Check the instance state
+    response = ec2.describe_instance_status(InstanceIds=[instance_id])
+    instance_state = response['InstanceStatuses'][0]['InstanceState']['Name']
+    
+    if instance_state == 'stopped':
+        # Send escalation email if instance is still stopped
+        sns_topic_arn = 'arn:aws:sns:REGION:ACCOUNT_ID:EscalationAlertTopic'
+        message = f"EC2 instance {instance_id} is still stopped after 1 hour."
+        
+        sns.publish(
+            TopicArn=sns_topic_arn,
+            Message=message,
+            Subject='EC2 Instance Escalation Alert',
+        )
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps('Escalation Alert Sent!')
+        }
+    else:
+        return {
+            'statusCode': 200,
+            'body': json.dumps('Instance is no longer stopped.')
+        }
+Deploy the function.
+Step 3: Set Up AWS Step Functions
+Go to the Step Functions console and create a new state machine.
+Define the following workflow:
+First Task: Trigger SendImmediateAlertLambda.
+Wait for 1 Hour: Add a wait state that pauses the workflow for 1 hour.
+Second Task: Trigger SendEscalationAlertLambda.
+Example State Machine Definition (Amazon States Language):
+
+json
+Copy code
+{
+  "Comment": "State machine to handle EC2 stopped instance alerts",
+  "StartAt": "SendImmediateAlert",
+  "States": {
+    "SendImmediateAlert": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:SendImmediateAlertLambda",
+      "Next": "Wait1Hour"
+    },
+    "Wait1Hour": {
+      "Type": "Wait",
+      "Seconds": 3600,
+      "Next": "SendEscalationAlert"
+    },
+    "SendEscalationAlert": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:SendEscalationAlertLambda",
+      "End": true
+    }
+  }
+}
+Deploy the state machine.
+Step 4: Create EventBridge Rule
+Go to the EventBridge console and create a new rule.
+Set the event source to EC2 and use the following event pattern to capture EC2 stop events:
+json
+Copy code
+{
+  "source": ["aws.ec2"],
+  "detail-type": ["EC2 Instance State-change Notification"],
+  "detail": {
+    "state": ["stopped"]
+  }
+}
+Set the target as the Step Functions state machine created in step 3.
+Deploy the rule.
+Step 5: Test the Setup
+Stop the EC2 instance manually or wait for it to stop.
+Check if the first Lambda function triggers and sends the immediate email.
+After 1 hour, verify if the second Lambda function triggers and sends the escalation email if the instance remains stopped.
+IAM Roles and Permissions:
+Make sure your Lambda functions and Step Functions have the necessary permissions:
+
+Lambda Functions: Need permissions to publish to SNS and describe EC2 instances.
+Step Functions: Need permissions to invoke the Lambda functions.
+Here’s a sample IAM policy for the Lambda functions:
+
+json
+Copy code
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sns:Publish",
+        "ec2:DescribeInstanceStatus"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+And a sample policy for Step Functions to invoke Lambda:
+
+json
+Copy code
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "lambda:InvokeFunction",
+      "Resource": [
+        "arn:aws:lambda:REGION:ACCOUNT_ID:function:SendImmediateAlertLambda",
+        "arn:aws:lambda:REGION:ACCOUNT_ID:function:SendEscalationAlertLambda"
+      ]
+    }
+  ]
+}
+Conclusion:
+By following this setup, your EventBridge rule will detect when an EC2 instance stops, trigger a Step Functions workflow to send an immediate email, and then wait for 1 hour to send an escalation email if necessary.
