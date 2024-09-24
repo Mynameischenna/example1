@@ -1,3 +1,36 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "IAM Role with a permissions boundary for MyApp",
+  "Resources": {
+    "MyAppRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "MyAppRole-EC2Access",
+        "Path": "/gwf/apps/MyApp/",
+        "PermissionsBoundary": "arn:aws:iam::123456789012:policy/gwf/boundaries/apps/MyAppPermissionsBoundary",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+
+
+
+
 Updates:
 
 The /gwf/operations/CDTOperator role has been updated in each account to enable permissions boundary
