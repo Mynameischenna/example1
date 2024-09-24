@@ -1,3 +1,437 @@
+Updates:
+
+The /gwf/operations/CDTOperator role has been updated in each account to enable permissions boundary
+
+Assumptions / Requirements:
+Preferred Method: Create a Role with Permissions Boundary using CloudFormation
+Least Preferred Method: Create a Role with Permissions Boundary using CLI
+Notes from Matt / SS-Prod example as of 10/24/2018
+This page contains the draft directions for how to create IAM roles within a permission boundary.
+
+Assumptions / Requirements:
+You must assume an AWS role with permissions to create roles.
+Roles may be created with CLI or CloudFormation.  
+Currently, roles cannot be created using the console because Path is unsupported in the IAM console.
+Roles must be created within the /gwf/apps/app_name/ path.  
+Attempts to create roles that are in this path will result in an Access Denied message.
+Policies must be created within the /gwf/apps/app_name/ path.  
+Attempts to create policies that are not in this path will result in an Access Denied message.
+Attempts to create roles with attached policies that are not in this path will result in an Access Denied message.
+Attempts to create roles with AWS Managed Policies attached will result in an Access Denied message.
+Create a Customer Managed version of the AWS Managed Policy, but replace any reference to Resource: "*" with an IAM Best Practice.
+A permissions boundary must be attached to the role at the time of role creation.  There are two policies to choose from:
+arn:aws:iam::<Account_Number>:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithIAM
+This policy is intended to be used by roles that need to interact with Great-West Approved AWS Services and need to create other roles.
+arn:aws:iam::<Account_Number>:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM
+This policy is intended to be used by roles that need to interact with Great-West Approved AWS Services.
+Preferred Method: Create a Role with Permissions Boundary using CloudFormation
+Requirements:
+
+Access to AssumeRole to the /gwf/operations/CDTOperator or <Account_Name>-FullStackTeam role.
+The ARN of an existing permissions boundary to attach to the Role (arn:aws:iam::<accountnumber>:policy/gwf/boundaries/apps/<boundaryname>).
+A CloudFormation template.
+Instructions:
+
+Create a CloudFormation role template that includes the following properties:
+AssumeRolePolicyDocument
+Also known as a "trust policy."  See IAM Best Practices: IAM for examples of common trust policy patterns and code snippets.
+ManagedPolicyArns
+Managed Policies can be created in the same CloudFormation template and passed by reference.
+Path
+See AWS IAM and Path for details.
+RoleName
+Roles should follow a descriptive naming standard of <App_Name>-Description.  For example, if my application is called underwaterbasketweaver, I might create a role called UnderwaterBasketWeaver-LambdaWriteToS3Role.
+Launch the CloudFormation stack from the template.
+An example CloudFormation template in YAML format might look something like:
+
+SampleRole
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: IAM Role with a permissions boundary
+Resources:
+  TestRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'PermissionBoundaryTestRole'
+      Path: /gwf/apps/
+      PermissionsBoundary: !Sub "arn:aws:iam::${AWS::AccountId}:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - 'ec2.amazonaws.com'
+          Action: 'sts:AssumeRole'
+
+
+Least Preferred Method: Create a Role with Permissions Boundary using CLI
+Requirements:
+
+Access to AssumeRole to the /gwf/operations/CDTOperator or <Account_Name>-FullStackTeam role.
+Shell access on is-xcloud05nb to obtain federated CLI credentials.
+The ARN of an existing permissions boundary to attach to the Role (arn:aws:iam::<accountnumber>:policy/gwf/boundaries/apps/<boundaryname>).
+The trust document for the role in json format.
+
+
+Instructions:
+
+Login to is-xcloud05nb using LDAP/Active Directory credentials
+
+directions to create SAML token
+
+federate in as /gwf/operations/CDTOperator role for the account that needs the role.
+
+When creating the role, you will need a json file containing a trust policy which defines what service will be using the role.  There are some examples of trust policies in the IAM Best Practices guide. Here is an example for an EC2 role:
+
+ec2trust.json
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+Create a role with a particular boundary:  
+
+
+
+[dfgkwg@is-xcloud05nb iamRoleTesting]$ aws iam create-role \
+--permissions-boundary arn:aws:iam::<Account_Number>:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM \
+--role-name testRole3 --assume-role-policy-document file://ec2trust.json \
+--path /gwf/apps/<App_name> --profile iamtest
+
+aws iam create-role --permissions-boundary <FULL PERMISSION BOUNDARY ARN> --role-name <ROLE NAME> --assume-role-policy-document file://<PATH TO TRUST DOCUMENT>.json --path /gwf/apps/<APP NAME>/ --profile saml
+
+You should a response similar to the following:
+
+create role output
+1
+{ "Role": { "PermissionsBoundary": { "PermissionsBoundaryType": "Policy", "PermissionsBoundaryArn": "arn:aws:iam::499776071476:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM" }, "AssumeRolePolicyDocument": { "Version": "2012-10-17", "Statement": [ { "Action": "sts:AssumeRole", "Effect": "Allow", "Principal": { "Service": "ec2.amazonaws.com" } } ] }, "RoleId": "AROAJRPI3P7H4TDI7EHCI", "CreateDate": "2018-10-05T17:13:27Z", "RoleName": "testRole3", "Path": "/gwf/apps/underwaterbasketweaver", "Arn": "arn:aws:iam::499776071476:role/gwf/apps/underwaterbasketweaver/testRole3" }
+Create a permissions policy with a path of /gwf/apps/<App_Name>/.
+
+CLI to create IAM policy
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+[user@is-xcloud05nb iamRoleTesting]$ aws iam create-policy --policy-name testPolicyName2 --policy-document file://testPolicy.json --profile iamtest --path /gwf/apps/underwaterbasketweaver/
+ {     "Policy":
+      {
+         "PolicyName": "testPolicyName2",
+         "PermissionsBoundaryUsageCount": 0,
+         "CreateDate": "2018-10-05T17:20:04Z",
+         "AttachmentCount": 0,
+         "IsAttachable": true,
+         "PolicyId": "ANPAITVBCUQSQA3BHFDJM",
+         "DefaultVersionId": "v1",
+         "Path": "/gwf/service/",
+         "Arn": "arn:aws:iam::499776071476:policy/gwf/apps/underwaterbasketweaver/testPolicyName2",
+         "UpdateDate": "2018-10-05T17:20:04Z"
+     }
+}
+Attach the permissions policy to the role.  This step may be performed using the Console once the role and permissions policy in the app-specific path have been created.
+
+CLI to attach IAM policy
+1
+2
+aws iam attach-role-policy --role-name testRole3 --policy-arn arn:aws:iam::499776071476:policy/gwf/apps/underwaterbasketweaver/testPolicyName2 \
+--profile iamtest
+Diagram
+
+
+Boundary      
+Delegated IAM Administrator
+EC2 Instance Boundary
+Lambda Boundary
+Other Boundaries
+Newly Created Roles
+arn:aws:iam::role/gwf/service/<ROLE>
+CreateBoundedIamPolicy
+Required
+Boundary
+Policies
+IAM Administrator
+Role managed by Security
+Policy managed by Security
+Role managed by CDT
+Policy managed by CDT
+arn:aws:iam::policy/gwf/boundary/*
+arn:aws:iam::policy/gwf/service/<POLICY>
+Security creates boundaries
+based on reasonable and frequent
+access requirements in partnership with
+the CDT / Application teams
+CDT IAM Admins are able to
+create new roles and policies,
+if and only if they attach an
+existing boundary to the role
+         Policy
+Boundary      
+Effective
+Permissions
+         Policy
+
+
+
+
+
+Boundary      
+Effective
+Permissions
+Effective
+Permissions
+
+
+arn:aws:iam::role/gwf/operations/<ROLE>
+arn:aws:iam::role/gwf/security/<ROLE>
+Legend
+Effective Permissions using Permissions Boundary
+Delegating IAM Administration using Permissions Boundary
+Logical Design
+- Sid: AllowAttachPermBoundary
+  Effect: Allow
+  Action:
+  - iam:DetachRolePolicy
+  - iam:AttachRolePolicy
+  - iam:DeleteRolePolicy
+  - iam:PutRolePermissionsBoundary
+  - iam:CreateRole
+  - iam:PutRolePolicy
+  Resource: arn:aws:iam:::role/gwf/service/*
+  Condition:
+    StringLike:
+      iam:PermissionsBoundary: arn:aws:iam::*:policy/gwf/boundaries/*
+
+- Sid: AllowOtherIAMActions
+  Effect: Allow
+  Action:
+  - iam:AddRoleToInstanceProfile
+  - iam:CreateInstanceProfile
+  - iam:CreatePolicy
+  - iam:CreatePolicyVersion
+  - iam:DeleteInstanceProfile
+  - iam:DeletePolicy
+  - iam:DeleteRole
+  - iam:UpdateRole
+  - iam:UpdateRoleDescription
+  - iam:RemoveRoleFromInstanceProfile
+  Resource:
+  - arn:aws:iam:::role/gwf/service/*
+  - arn:aws:iam:::policy/gwf/service/*
+  - arn:aws:iam:::instance-profile/gwf/service/*
+
+Delegating IAM Administration using Permissions Boundary
+Physical Design
+arn:aws:iam::role/gwf/operations/DelegatedIAMAdmin
+ExampleBlacklistBoundary:
+  Type: 'AWS::IAM::ManagedPolicy'
+  Properties:
+    ManagedPolicyName: blacklist-specific-actions-boundary
+    Path: /gwf/boundaries/
+    PolicyDocument:
+      Version: 2012-10-17
+      Statement:
+      - Sid: BoundaryAllowance
+        Effect: Allow
+        Action: '*'
+        Resource: '*'
+      - Sid:DenyNotApprovedAction
+        Effect:Deny
+        Action:
+        - iam:*
+        - organizations:*
+        Resource:'*'
+      - Sid: DenyNotApprovedRegions
+        Action: '*'
+        Resource: '*'
+        Effect: Deny
+        Condition:
+          StringNotEquals:
+            'aws:RequestedRegion':
+            - us-west-2
+            - us-east-1
+      
+ExampleWhitelistBoundary:
+  Type: 'AWS::IAM::ManagedPolicy'
+  Properties:
+    ManagedPolicyName: whitelist-specific-actions-boundary
+    Path: /gwf/boundaries/
+    PolicyDocument:
+      Version: 2012-10-17
+      Statement:
+      - Sid: AllowActions
+        Effect: Allow
+        Action: 
+        - 's3:GetObject'
+        - 'ssm:*'
+        - 'logs:*'
+        Resource: '*'
+      - Sid: DenyNotApprovedRegions
+        Action: '*'
+        Resource: '*'
+        Effect: Deny
+        Condition:
+          StringNotEquals:
+            'aws:RequestedRegion':
+            - us-west-2
+            - us-east-1
+        Resource: '*'
+Matt Helgen
+10/5/2018
+Policy
+Error Messages
+message 1
+
+
+message 2
+
+
+message 3
+
+
+(---------- if you need this -----------------)
+
+
+
+
+
+
+Notes from Matt / SS-Prod example as of 10/24/2018
+here’s the commands I ran in the sharedservices prod account to create the role, after federating into the CDTOperator role on is-xcloud05nb
+ 
+aws iam create-role \
+--permissions-boundary arn:aws:iam::676428981261:policy/gwf/boundaries/operations/OperationsTestBoundary \
+--role-name mtthlg-test \
+--assume-role-policy-document file://ec2trust.json \
+--path /gwf/operations/services/ \
+--profile saml
+
+Returns:
+{
+    "Role": {
+        "PermissionsBoundary": {
+            "PermissionsBoundaryType": "Policy",
+            "PermissionsBoundaryArn": "arn:aws:iam::676428981261:policy/gwf/boundaries/operations/OperationsTestBoundary"
+        },
+        "AssumeRolePolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": "sts:AssumeRole",
+                    "Effect": "Allow",
+                    "Principal": {
+                        "Service": "ec2.amazonaws.com"
+                    }
+                }
+            ]
+        },
+        "RoleId": "AROAJSWTGLMITKAYZG35K",
+        "CreateDate": "2018-10-24T16:49:37Z",
+        "RoleName": "mtthlg-test",
+        "Path": "/gwf/operations/services/",
+        "Arn": "arn:aws:iam::676428981261:role/gwf/operations/services/mtthlg-test"
+    }
+}
+ 
+For the boundaries, we’ve created 2 empty boundaries which can be used for testing in every account (the account number will differ by account)
+ 
+arn:aws:iam::676428981261:policy/gwf/boundaries/operations/OperationsTestBoundary  
+arn:aws:iam::676428981261:policy/gwf/boundaries/apps/AppsTestBoundary
+ 
+For the ec2trust.json file, this depends on what the role will be used for, here is the example file content for if we are creating an ec2 role, the trust policy will depend on what service needs to use the role:
+ 
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+After this role is created, you should be able to manage it via the console, or create new policies in cloudformation and attach them to this role. Only the initial creation of the role itself needs to be done via CLI, until the “PermissionsBoundary” option is available as part of the AWS::IAM::Role cloudformation resource properties.
+
+
+
+
+
+
+
+Resources:
+
+
+
+Permission Boundary links recommended by Unknown User (rjskkn) on 4 February 2019:
+
+https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
+https://aws.amazon.com/blogs/security/delegate-permission-management-to-developers-using-iam-permissions-boundaries/
+https://www.youtube.com/watch?v=YQsK4MtsELU
+
+
+https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html was a recommended reference to understand adding AWS services to IAM policies from Matt Helgen in October 2018
+
+
+
+
+
+
+LikeBe the first to like this
+No labelsEdit Labels
+User icon: Add a picture of yourself
+
+
+
+
 AWSTemplateFormatVersion: '2010-09-09'
 Resources:
   LambdaExecutionRole:
