@@ -1,5 +1,42 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Resources:
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'LambdaEC2LogsPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:us-east-1:*:*'
+              - Effect: Allow
+                Action:
+                  - 'ec2:Start*'
+                  - 'ec2:Stop*'
+                Resource: 'arn:aws:ec2:us-east-1:*:instance/*'
+
+Outputs:
+  LambdaRole:
+    Value: !Ref LambdaExecutionRole
+    Description: The IAM role ARN for Lambda execution
+
+
+
+
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
 
   # Create the IAM Role for Lambda function
   LambdaExecutionRole:
