@@ -1,5 +1,31 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
+Description: IAM Role for Lambda with a permissions boundary
+Resources:
+  
+  LambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: LambdaExecutionRole
+      Path: /gwf/apps/
+      PermissionsBoundary: !Sub >-
+        arn:aws:iam::${AWS::AccountId}:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+
+
+---
+AWSTemplateFormatVersion: 2010-09-09
 Description: IAM Role with a permissions boundary
 Resources:
   
