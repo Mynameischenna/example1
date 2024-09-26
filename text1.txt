@@ -1,3 +1,47 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lambda Role with EC2 and CloudWatch Logs Permissions
+
+Resources:
+  Chennatest1LambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: "chennatest1"
+      Path: "/gwf/apps/chennatest/"
+      PermissionsBoundary: "arn:aws:iam::123456789012:policy/gwf/boundaries/apps/MyAppPermissionsBoundary"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action: "sts:AssumeRole"
+      # Attach policies for Lambda to perform basic tasks and the custom permissions
+      ManagedPolicyArns: 
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: "CustomEC2AndCloudWatchPermissions"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Permissions for CloudWatch Logs
+              - Effect: "Allow"
+                Action: 
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "arn:aws:logs:*:*:*"
+              # Permissions to start and stop EC2 instances
+              - Effect: "Allow"
+                Action: 
+                  - "ec2:Start*"
+                  - "ec2:Stop*"
+                Resource: "*"
+
+
+
+
+
 AWSTemplateFormatVersion: "2010-09-09"Description: Compliance Lambda IAM Role with an Empower permissions boundaryResources:ComplianceLambdaS3Read:Type: 'AWS::IAM::Role'Properties:RoleName: 'ComplianceLambdaS3Read'Path: /gwf/apps/compliance/PermissionsBoundary: !Sub"arn:aws:iam::${AWS::AccountId}:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM"ManagedPolicyArns:["arn:aws:iam::aws:policy/AWSLambda_FullAccess","arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole","arn:aws:iam::aws:policy/AmazonS3FullAccess"]AssumeRolePolicyDocument:Version: '2012-10-17'Statement:-Effect: AllowPrincipal:Service:-'lambda.amazonaws.com'Action: 'sts:AssumeRole'ComplianceLambdaEC2Full:Type: 'AWS::IAM::Role'Properties:RoleName: 'ComplianceLambdaEC2Full'Path: /gwf/apps/compliance/PermissionsBoundary: !Sub"arn:aws:iam::${AWS::AccountId}:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM"ManagedPolicyArns:["arn:aws:iam::aws:policy/AWSLambda_FullAccess","arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole","arn:aws:iam::aws:policy/AmazonEC2FullAccess"]AssumeRolePolicyDocument:Version: '2012-10-17'Statement:-Effect: AllowPrincipal:Service:-'lambda.amazonaws.com'Action: 'sts:AssumeRole
 
 {
