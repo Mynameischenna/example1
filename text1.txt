@@ -1,3 +1,23 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Policy to allow the starting of an EC2
+Resources:
+  EC2StartPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: chenna1policy
+      Path: /gwf/apps/
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: 'logs:*'
+            Resource: 'arn:aws:logs:::*'
+          - Effect: Allow
+            Action: 'ec2:*'
+            Resource: 'arn:aws:ec2:::*'
+
+
+
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Lambda Role with EC2 and CloudWatch Logs Permissions
 
