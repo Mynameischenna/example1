@@ -1,4 +1,25 @@
 AWSTemplateFormatVersion: 2010-09-09
+Description: Role to allow starting an EC2 instance
+
+Resources:
+  EC2StartRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: chenna1role
+      Path: /gwf/apps/
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 'ec2.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+
+
+
+AWSTemplateFormatVersion: 2010-09-09
 Description: Policy to allow the starting of an EC2
 Resources:
   EC2StartPolicy:
