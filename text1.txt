@@ -1,3 +1,30 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM Role with a permissions boundary
+Resources:
+  
+  BackupRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: BackupRole
+      Path: /gwf/apps/
+      PermissionsBoundary: !Sub >-
+        arn:aws:iam::${AWS::AccountId}:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - backup.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - >-
+          arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
+
+
+
 AWSTemplateFormatVersion: 2010-09-09
 Description: Role to allow starting an EC2 instance
 
