@@ -1,3 +1,17 @@
+{
+  "errorMessage": "An error occurred (UnauthorizedOperation) when calling the StartInstances operation: You are not authorized to perform this operation. User: arn:aws:sts::563003501456:assumed-role/LambdaEC2ManagementRole/test-chenna-last is not authorized to perform: ec2:StartInstances on resource: arn:aws:ec2:us-east-1:563003501456:instance/i-0488b8da2a2809c51 because no identity-based policy allows the ec2:StartInstances action. Encoded authorization failure message: zCAWRNCFjL8YiALExJZzPmdNdFWer4GA75KjX-oZsm1ZREL-N3s9ITmpLEgtBrDKOUGtushvpTeD3TlSA32XCDyYC0Ng7CvhAPkqBgvwj7uYUqwDN-Uumdk9n2jcV4NEyKvQbXKU5QGfAAuSNDU8NUHm_FEOuWTFVCOXrmjZsCu7UKVuXG9HYe4HH9TQjUReokDBdho8Kk-MtDTTssB9UzVm_98f0PM2GayJSnuasAtCRuFy_JnDRJlKy5EQ2AZ1hQSXiVkQRj3dH7VuGR-uYS4qXBV1jQkL8SJGUiXXygx2_GTJPY1P0MRQeA4oIRLs4aoahSAO2bPSYQhCzQtMAz7pCH6aK_QaR11OJbde-JFaDoc9e44Y0Dyvk8WdXpDeoLQHZoe18n-Osi-RsT8zAf3PzaxsCaDqRitcyGbdkCSjscuc9K9X9BFEALGV31Tn4A8At0Mgk1piXkZTreLzsZcbWlXyuibvN0Pu55HgJyU9kx4onMIou9CIK5pBKeAdtVW2u-n62ZQw-MCldOxkkq5HysQ-iFtkZxXd77ehSdIFnOmYpRRyFvtluwzEzjAJWyKhaLkPws1CfJ9aswY3zNgunlJDRAV8mgbZfrOnnOKQNOX4aVMozbg8W7e_J0r_HVcaXJQ_8Bd93ElqkDvVrAnXCq3ZawcGMLDcEAuI_ELcG2LUDyeqq7S7jQWyfQEylcaivOAxQ168Obew0Un8ksVGnW5cIvVE1zj7XQ3cJf-FOoX_rdtoN7-i4TauIeovMxEXzs0Tns46qaqRUGrVysyI0aPv4Zi60UgWtviDTl90P8sfZTqeDmfD71yj-oEP_kHc3LSXAbRdywhv8GorVhO9fcskvFbkep_WERvkuegFRUS1h4OtCzC4v_ff9zK2rrOmHQ4NQAa1aDe3Y0cpStwnT-psgpczhG3eFLglm0MRzODbPlbIulsEJzTlKnA1Dq1yabIPmT8UYWtOJYMk7mk86Vn_2v4eht1Tdya758Hw3PzLxq0",
+  "errorType": "ClientError",
+  "requestId": "83c9032b-28e2-4d2f-95e7-7c927ea231b3",
+  "stackTrace": [
+    "  File \"/var/task/lambda_function.py\", line 12, in lambda_handler\n    ec2.start_instances(InstanceIds = instances)\n",
+    "  File \"/var/lang/lib/python3.12/site-packages/botocore/client.py\", line 565, in _api_call\n    return self._make_api_call(operation_name, kwargs)\n",
+    "  File \"/var/lang/lib/python3.12/site-packages/botocore/client.py\", line 1021, in _make_api_call\n    raise error_class(parsed_response, operation_name)\n"
+  ]
+}
+
+
+
+
 AWSTemplateFormatVersion: '2010-09-09'
 Description: IAM Role for Lambda to Start/Restart EC2 Instances with Logging Access and Existing Chenna1Policy
 
