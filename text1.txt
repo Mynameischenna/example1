@@ -1,3 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM Role for Lambda to Start/Restart EC2 Instances with Logging Access and Existing Chenna1Policy
+
+Resources:
+  # Lambda IAM Role with EC2 management and logging access
+  LambdaEC2ManagementRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: LambdaEC2ManagementRole
+      Path: /gwf/apps/lambda/
+      PermissionsBoundary: !Sub arn:aws:iam::${AWS::AccountId}:policy/gwf/boundaries/apps/GwfAppPermissionsBoundaryWithoutIAM
+      AssumeRolePolicyDocument: 
+        Version: '2012-10-17'
+        Statement: 
+          - Effect: Allow
+            Principal: 
+              Service: 
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      
+      # Attach the required managed policies
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AWSLambda_FullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        
+        # Attach the already created Chenna1Policy
+        - arn:aws:iam::${AWS::AccountId}:policy/gwf/apps/chenna1policy
+
+
+
+
+
+
+
+
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: Policy to allow the starting of an EC2
