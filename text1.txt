@@ -1,4 +1,179 @@
 {
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Resource": "*",
+			"Effect": "Allow",
+			"NotAction": [
+				"iam:*",
+				"organizations:*",
+				"account:*",
+				"cloudhsm:*",
+				"cognito-idp:*",
+				"cognito-identity:*",
+				"cognito-sync:*",
+				"fms:*",
+				"guardduty:*",
+				"inspector:*",
+				"inspector2:*",
+				"macie2:*",
+				"network-firewall:*",
+				"shield:*"
+			],
+			"Sid": "AllowPowerUserAccess"
+		},
+		{
+			"Action": [
+				"ec2:GetPasswordData",
+				"iam:CreateServiceLinkedRole",
+				"iam:DeleteServiceLinkedRole",
+				"iam:ListRoles",
+				"organizations:DescribeOrganization",
+				"account:ListRegions"
+			],
+			"Resource": "*",
+			"Effect": "Allow",
+			"Sid": "AllowPowerUserAccessIam"
+		},
+		{
+			"Action": [
+				"iam:List*",
+				"iam:Generate*",
+				"iam:Get*",
+				"iam:Simulate*"
+			],
+			"Resource": "*",
+			"Effect": "Allow",
+			"Sid": "AllowReadIAMActions"
+		},
+		{
+			"Action": [
+				"iam:PassRole"
+			],
+			"Resource": [
+				"arn:aws:iam::563003501456:role/gwf/service/*",
+				"arn:aws:iam::563003501456:role/gwf/apps/*"
+			],
+			"Effect": "Allow",
+			"Sid": "PassRole"
+		},
+		{
+			"Action": [
+				"ec2:AcceptVpcEndpointConnections",
+				"ec2:AcceptVpcPeeringConnection",
+				"ec2:AssociateRouteTable",
+				"ec2:AssociateSubnetCidrBlock",
+				"ec2:AssociateVpcCidrBlock",
+				"ec2:AttachClassicLinkVpc",
+				"ec2:AttachInternetGateway",
+				"ec2:AttachVpnGateway",
+				"ec2:CreateDefaultSubnet",
+				"ec2:CreateDefaultVpc",
+				"ec2:CreateDhcpOptions",
+				"ec2:CreateEgressOnlyInternetGateway",
+				"ec2:CreateInternetGateway",
+				"ec2:CreateNatGateway",
+				"ec2:CreateNetworkAcl",
+				"ec2:CreateNetworkAclEntry",
+				"ec2:CreateRoute",
+				"ec2:CreateRouteTable",
+				"ec2:CreateSubnet",
+				"ec2:CreateVpc",
+				"ec2:CreateVpcEndpoint",
+				"ec2:CreateVpcEndpointConnectionNotification",
+				"ec2:CreateVpcEndpointServiceConfiguration",
+				"ec2:CreateVpcPeeringConnection",
+				"ec2:CreateVpnConnection",
+				"ec2:CreateVpnConnectionRoute",
+				"ec2:CreateVpnGateway",
+				"wafv2:Create*",
+				"wafv2:Update*",
+				"wafv2:Delete*",
+				"waf:Create*",
+				"waf:Update*",
+				"waf:Delete*",
+				"fms:*",
+				"ec2:DeleteEgressOnlyInternetGateway",
+				"ec2:DeleteInternetGateway",
+				"ec2:DeleteNatGateway",
+				"ec2:DeleteNetworkAcl",
+				"ec2:DeleteNetworkAclEntry",
+				"ec2:DeleteRoute",
+				"ec2:DeleteRouteTable",
+				"ec2:DeleteSubnet",
+				"ec2:DeleteVpc",
+				"ec2:DeleteVpcEndpointConnectionNotifications",
+				"ec2:DeleteVpcEndpoints",
+				"ec2:DeleteVpcEndpointServiceConfigurations",
+				"ec2:DeleteVpcPeeringConnection",
+				"ec2:DeleteVpnConnection",
+				"ec2:DeleteVpnConnectionRoute",
+				"ec2:DeleteVpnGateway",
+				"ec2:DisableVgwRoutePropagation",
+				"ec2:DisassociateRouteTable",
+				"ec2:EnableVgwRoutePropagation",
+				"ec2:EnableVpcClassicLink",
+				"ec2:EnableVpcClassicLinkDnsSupport",
+				"ec2:ModifySubnetAttribute",
+				"ec2:ModifyVpcAttribute",
+				"ec2:ModifyVpcEndpoint",
+				"ec2:ModifyVpcEndpointConnectionNotification",
+				"ec2:ModifyVpcEndpointServiceConfiguration",
+				"ec2:ModifyVpcEndpointServicePermissions",
+				"ec2:ModifyVpcPeeringConnectionOptions",
+				"ec2:ModifyVpcTenancy",
+				"ec2:RejectVpcEndpointConnections",
+				"ec2:RejectVpcPeeringConnection",
+				"ec2:ReplaceRoute",
+				"ec2:ReplaceRouteTableAssociation",
+				"s3:PutAccountPublicAccessBlock",
+				"s3:PutBucketPublicAccessBlock",
+				"s3:DeleteBucketEncryption"
+			],
+			"Resource": "*",
+			"Effect": "Deny",
+			"Sid": "DenyNotApprovedAction"
+		},
+		{
+			"Condition": {
+				"StringEquals": {
+					"ec2:ResourceTag/department": "securityengineering"
+				},
+				"ForAllValues:StringEquals": {
+					"aws:TagKeys": "department"
+				}
+			},
+			"Action": [
+				"ec2:AuthorizeSecurityGroupEgress",
+				"ec2:AuthorizeSecurityGroupIngress",
+				"ec2:CreateSecurityGroup",
+				"ec2:DeleteSecurityGroup"
+			],
+			"Resource": "arn:aws:ec2:*:*:security-group/*",
+			"Effect": "Deny",
+			"Sid": "DenySecOpsOwnedSecuritygroups"
+		},
+		{
+			"Condition": {
+				"StringNotEquals": {
+					"aws:RequestedRegion": [
+						"us-west-2",
+						"us-east-1"
+					]
+				}
+			},
+			"Action": "*",
+			"Resource": "*",
+			"Effect": "Deny",
+			"Sid": "DenyNotApprovedRegions"
+		}
+	]
+}
+
+
+
+
+{
   "errorMessage": "An error occurred (UnauthorizedOperation) when calling the StartInstances operation: You are not authorized to perform this operation. User: arn:aws:sts::563003501456:assumed-role/LambdaEC2ManagementRole/test-chenna-last is not authorized to perform: ec2:StartInstances on resource: arn:aws:ec2:us-east-1:563003501456:instance/i-0488b8da2a2809c51 because no identity-based policy allows the ec2:StartInstances action. Encoded authorization failure message: zCAWRNCFjL8YiALExJZzPmdNdFWer4GA75KjX-oZsm1ZREL-N3s9ITmpLEgtBrDKOUGtushvpTeD3TlSA32XCDyYC0Ng7CvhAPkqBgvwj7uYUqwDN-Uumdk9n2jcV4NEyKvQbXKU5QGfAAuSNDU8NUHm_FEOuWTFVCOXrmjZsCu7UKVuXG9HYe4HH9TQjUReokDBdho8Kk-MtDTTssB9UzVm_98f0PM2GayJSnuasAtCRuFy_JnDRJlKy5EQ2AZ1hQSXiVkQRj3dH7VuGR-uYS4qXBV1jQkL8SJGUiXXygx2_GTJPY1P0MRQeA4oIRLs4aoahSAO2bPSYQhCzQtMAz7pCH6aK_QaR11OJbde-JFaDoc9e44Y0Dyvk8WdXpDeoLQHZoe18n-Osi-RsT8zAf3PzaxsCaDqRitcyGbdkCSjscuc9K9X9BFEALGV31Tn4A8At0Mgk1piXkZTreLzsZcbWlXyuibvN0Pu55HgJyU9kx4onMIou9CIK5pBKeAdtVW2u-n62ZQw-MCldOxkkq5HysQ-iFtkZxXd77ehSdIFnOmYpRRyFvtluwzEzjAJWyKhaLkPws1CfJ9aswY3zNgunlJDRAV8mgbZfrOnnOKQNOX4aVMozbg8W7e_J0r_HVcaXJQ_8Bd93ElqkDvVrAnXCq3ZawcGMLDcEAuI_ELcG2LUDyeqq7S7jQWyfQEylcaivOAxQ168Obew0Un8ksVGnW5cIvVE1zj7XQ3cJf-FOoX_rdtoN7-i4TauIeovMxEXzs0Tns46qaqRUGrVysyI0aPv4Zi60UgWtviDTl90P8sfZTqeDmfD71yj-oEP_kHc3LSXAbRdywhv8GorVhO9fcskvFbkep_WERvkuegFRUS1h4OtCzC4v_ff9zK2rrOmHQ4NQAa1aDe3Y0cpStwnT-psgpczhG3eFLglm0MRzODbPlbIulsEJzTlKnA1Dq1yabIPmT8UYWtOJYMk7mk86Vn_2v4eht1Tdya758Hw3PzLxq0",
   "errorType": "ClientError",
   "requestId": "83c9032b-28e2-4d2f-95e7-7c927ea231b3",
