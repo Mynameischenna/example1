@@ -1,3 +1,392 @@
+/**
+ * Title: ModelTest
+ * Description: Model for the Test application. Communicates with the View
+ * and Control about state changes and settings. Stores information about
+ * the parameter settings, the input and output files, and the view display.
+ *
+ * Interesting notes:
+ * Notify() can be turned on or off. Typically, if you are loading a large
+ * runstream, Notify() will be turned off until the entire file is loaded
+ * and processed, and then a global notify is sent, and the auto Notify()
+ * is turned back on.
+ * @author Paul Raab
+ * @version 1.0
+ */
+
+package com.hrlc.compliance.ecmstore;
+
+import java.io.*;
+import javax.swing.*;
+
+import org.apache.commons.io.FilenameUtils;
+
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.regex.Pattern;
+
+public class ModelMain {
+
+	private String inputDocFileName;
+	private String inputXMLFileName;
+	
+	private String AccessCode;
+	private String ActionRequired;
+	private String AvailableOnline;
+	private String Category;
+	private String dbinst;
+	private String DocumentGroup;
+	private String DocumentClass;
+	private String DMTYCODE;
+	private String DocumentDescription;
+	private String EffDate;
+	private String FriendlyName;
+	private String GroupID;
+	private String PlanName;
+	private String PeriodBegin;
+	private String PeriodEnd;
+	private String SortOrder;
+	
+	private String DocumentTitle; // FriendlyName from XML
+	private String BatchName; // ICC Ingestion-<file name>
+	private String CategorySubclass; // category from XML
+	private String DatabaseInstance; // dbinst from XML
+	private String EffectiveDate; // EffDate from XML
+	private String ExternalView; // AvailableOnline from XML
+	private String DocumentType; // friendlyname from XML
+	private String PlanNumber; // GroupID from XML
+	private String smart_submission_packages; // FriendlyName from XML
+	
+	private static Logger logger = null;
+	private static FileHandler handler = null;
+
+	public ModelMain() {
+		
+		handler = null;
+		boolean append = true;
+		try {
+			handler = new FileHandler("C:\\ECMStoreLog\\default.log", append);
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		SimpleFormatter formatter = new SimpleFormatter();    
+		handler.setFormatter(formatter);
+		logger = Logger.getLogger("com.hrlc.compliance.ecmstore");
+		logger.addHandler(handler);
+
+		logger.info("ECMStore start");
+
+	}
+
+	public String getInputDocFileName() {
+		return inputDocFileName;
+	}
+
+	public void setInputDocFileName(String inputDocFileName) {
+		this.inputDocFileName = inputDocFileName;
+	}
+
+	public String getInputXMLFileName() {
+		return inputXMLFileName;
+	}
+
+	public void setInputXMLFileName(String inputXMLFileName) {
+		this.inputXMLFileName = inputXMLFileName;
+	}
+	
+	public String getAccessCode() {
+		return AccessCode;
+	}
+
+	public void setAccessCode(String accessCode) {
+		AccessCode = accessCode;
+	}
+
+	public String getActionRequired() {
+		return ActionRequired;
+	}
+
+	public void setActionRequired(String actionRequired) {
+		ActionRequired = actionRequired;
+	}
+
+	public String getAvailableOnline() {
+		return AvailableOnline;
+	}
+
+	public void setAvailableOnline(String availableOnline) {
+		AvailableOnline = availableOnline;
+	}
+
+	public String getCategory() {
+		return Category;
+	}
+
+	public void setCategory(String category) {
+		Category = category;
+	}
+
+	public String getDbinst() {
+		return dbinst;
+	}
+
+	public void setDbinst(String dbinst) {
+		this.dbinst = dbinst;
+	}
+
+	public String getDocumentClass() {
+		return DocumentClass;
+	}
+
+	public void setDocumentClass(String documentClass) {
+		DocumentClass = documentClass;
+	}
+
+	public String getDMTYCODE() {
+		return DMTYCODE;
+	}
+
+	public void setDMTYCODE(String dMTYCODE) {
+		DMTYCODE = dMTYCODE;
+	}
+
+	public String getDocumentDescription() {
+		return DocumentDescription;
+	}
+
+	public void setDocumentDescription(String documentDescription) {
+		DocumentDescription = documentDescription;
+	}
+
+	public String getEffDate() {
+		return EffDate;
+	}
+
+	public void setEffDate(String effDate) {
+		EffDate = effDate;
+	}
+
+	public String getFriendlyName() {
+		return FriendlyName;
+	}
+
+	public void setFriendlyName(String friendlyName) {
+		FriendlyName = friendlyName;
+	}
+
+	public String getGroupID() {
+		return GroupID;
+	}
+
+	public void setGroupID(String groupID) {
+		GroupID = groupID;
+	}
+
+	public String getPeriodBegin() {
+		return PeriodBegin;
+	}
+
+	public void setPeriodBegin(String periodBegin) {
+		PeriodBegin = periodBegin;
+	}
+
+	public String getPeriodEnd() {
+		return PeriodEnd;
+	}
+
+	public void setPeriodEnd(String periodEnd) {
+		PeriodEnd = periodEnd;
+	}
+
+	public String getDocumentTitle() {
+		return DocumentTitle;
+	}
+
+	public void setDocumentTitle(String documentTitle) {
+		DocumentTitle = documentTitle;
+	}
+
+	public String getBatchName() {
+		return BatchName;
+	}
+
+	public void setBatchName(String batchName) {
+		BatchName = batchName;
+	}
+
+	public String getCategorySubclass() {
+		return CategorySubclass;
+	}
+
+	public void setCategorySubclass(String categorySubclass) {
+		CategorySubclass = categorySubclass;
+	}
+
+	public String getDatabaseInstance() {
+		return DatabaseInstance;
+	}
+
+	public void setDatabaseInstance(String databaseInstance) {
+		DatabaseInstance = databaseInstance;
+	}
+
+	public String getDocumentGroup() {
+		return DocumentGroup;
+	}
+
+	public void setDocumentGroup(String documentGroup) {
+		this.DocumentGroup = documentGroup;		
+	}
+
+	public String getEffectiveDate() {
+		return EffectiveDate;
+	}
+
+	public void setEffectiveDate(String effectiveDate) {
+		EffectiveDate = effectiveDate;
+	}
+
+	public String getExternalView() {
+		return ExternalView;
+	}
+
+	public void setExternalView(String externalView) {
+		ExternalView = externalView;
+	}
+
+	public String getDocumentType() {
+		return DocumentType;
+	}
+
+	public void setDocumentType(String documentType) {
+		DocumentType = documentType;
+	}
+
+	public String getPlanName() {
+		return PlanName;
+	}
+
+	public void setPlanName(String planName) {
+		PlanName = planName;
+	}
+
+	public String getPlanNumber() {
+		return PlanNumber;
+	}
+
+	public void setPlanNumber(String planNumber) {
+		PlanNumber = planNumber;
+	}
+
+	public String getSmart_submission_packages() {
+		return smart_submission_packages;
+	}
+
+	public void setSmart_submission_packages(String smart_submission_packages) {
+		this.smart_submission_packages = smart_submission_packages;
+	}
+	
+	public String getSortOrder() {
+		return SortOrder;
+	}
+	
+	public void setSortOrder(String sortOrder) {
+		this.SortOrder = sortOrder;
+	}
+
+	/*
+	 * Get all the files in a template directory
+	 * store in a fileHash Hashtable data structure
+	 * Look for only *.docx files
+	 */
+	public void getFiles(String templateDir, Hashtable<String, String> xmlFileHash,
+						 Hashtable<String, String> docFileHash) {
+
+		/*
+		 * Set directory name
+		 */
+		File fileTemplateDir = new File(templateDir);
+		String delims  = ".";
+
+		/*
+		 * Process all files in directory
+		 */
+		if (fileTemplateDir.listFiles() == null) {
+			return;
+		}
+		for (final File fileEntry : fileTemplateDir.listFiles()) {
+
+			/*
+			 * Debug output
+			 */
+			String fileName = fileEntry.getName();
+			if (fileEntry.isDirectory()) {
+				System.out.println("Directory: " + fileEntry.getName());
+				continue;
+			}
+			else if (FilenameUtils.getExtension(fileName) != null &&
+					FilenameUtils.getExtension(fileName).equals("xml")) {
+				System.out.println("XML" + fileEntry.getName());
+				String[] tokenString = fileEntry.getName().split(Pattern.quote("."));
+
+				/*
+				 * Get file path
+				 */
+				String filePath = fileEntry.getPath();
+
+				/*
+				 * Put filePath into fileHash using planNumber as key
+				 */
+				xmlFileHash.put(tokenString[0], filePath);
+
+			}
+			else if (FilenameUtils.getExtension(fileName) != null &&
+					FilenameUtils.getExtension(fileName).equals("pdf")) {
+				System.out.println("PDF " + fileEntry.getName());
+				String testStr = fileEntry.getName();
+				String[] tokenString = testStr.split(Pattern.quote("."));
+
+				/*
+				 * Get file path
+				 */
+				String filePath = fileEntry.getPath();
+
+				/*
+				 * Put filePath into fileHash using planNumber as key
+				 */
+				docFileHash.put(tokenString[0], filePath);
+			}
+			else {
+				System.out.println(fileEntry.getName());
+				continue;
+			}
+
+		}
+	}
+	
+	/*
+	 * Close log file
+	 */
+	public void closeLog() {
+		handler.close();
+	}
+
+	public Logger getLogger() {
+		return this.logger;
+	}
+
+}
+
+
+
+
+
 /*
  * Class: DocuSignPostAPI
  * Author: Paul Raab
