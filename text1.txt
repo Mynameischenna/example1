@@ -1,3 +1,808 @@
+/*
+ * Class: DocuSignPostAPI
+ * Author: Paul Raab
+ * Date: November 11, 2020
+ * Group: HRLC
+ * Class to build and send POST request to DocuSign API.
+ * 
+ * Use:
+ * https://hc.apache.org/httpcomponents-client-ga/httpmime/examples/org/apache/http/examples/entity/mime/ClientMultipartFormPost.java
+ * For formatting response as JSON
+ * https://stackoverflow.com/questions/20374156/sending-and-parsing-response-using-http-client-for-a-json-list
+ * ====================================================================
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ * 
+ * 06/01/2021
+ * Add More detail on response header
+ *
+ */
+package com.hrlc.compliance.ecmstore;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.ParseException;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.InputStreamBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+//import org.springframework.http.HttpEntity;
+
+/**
+ * Example how to use multipart/form encoded POST request.
+ */
+public class PostAPI {
+
+	private String inputDocFileName;
+	private String inputXMLFileName;
+
+	private String DocumentTitle; // FriendlyName from XML
+	private String BatchName; // ICC Ingestion-<file name>
+	private String CategorySubclass; // category from XML
+	private String DatabaseInstance; // dbinst from XML
+	private String EffectiveDate; // EffDate from XML
+	private String ExternalView; // AvailableOnline from XML
+	private String DocumentType; // friendlyname from XML
+	private String PlanName; // PlanName from XML
+	private String PlanNumber; // GroupID from XML
+	private String smart_submission_packages; // FriendlyName from XML
+
+	private String httpStatus = null;
+	private String envelopeId = null;
+	private String errorDetails = null;
+	private String statusStr = null;
+	private String statusDateTime = null;
+	private boolean status;
+	private String error;
+	private String message;
+
+	private ArrayList<InputStreamBody> isb = null;
+
+	private ModelMain modelMain;
+
+	private final String runType ="PROD";
+	//	private final String runType ="DEV";
+	//	private final String runType ="DEVNOAPI";
+
+	public PostAPI(ModelMain modelMain) {
+		this.modelMain = modelMain;
+	}
+
+	public String getStatusStr() {
+		return statusStr;
+	}
+
+	public void setStatusStr(String statusStr) {
+		this.statusStr = statusStr;
+	}
+
+	public String getStatusDateTime() {
+		return statusDateTime;
+	}
+
+	public void setStatusDateTime(String statusDateTime) {
+		this.statusDateTime = statusDateTime;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	/*
+	 * Send SmartSubmission POST request
+	 */
+	public boolean sendPostSmartSubmission(String pdfFile) {
+
+		status = true;
+
+		inputDocFileName = modelMain.getInputDocFileName();
+
+		CloseableHttpClient httpClient = null;
+		CloseableHttpResponse httpResponse = null;
+
+		RequestConfig requestConfig = RequestConfig.custom()
+				.setConnectionRequestTimeout(100000)
+				.setConnectTimeout(100000)
+				.setSocketTimeout(100000)
+				.build();
+		httpClient = HttpClients.custom()
+				.setDefaultRequestConfig(requestConfig)
+				.build();
+
+		/*
+		 * Build the POST request
+		 */
+		URI uri = null;
+		URIBuilder uriBuilder = null;
+
+		/*
+		 * Add parameters to URL
+		 */
+		String sdocType = modelMain.getDocumentType();
+		String docGroup = modelMain.getDocumentGroup();
+		String dbinst = modelMain.getDatabaseInstance();
+		String category = modelMain.getCategorySubclass();
+		String planName = modelMain.getPlanName();
+		String planNumber = modelMain.getPlanNumber();
+		String effDate = modelMain.getEffectiveDate();
+		if (!effDate.equals(null) && !effDate.equals("")) {
+			DateTimeFormatter formatterIn = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
+
+			String dateIn = effDate;
+			LocalDate date = LocalDate.parse(dateIn, formatterIn);
+			
+			DateTimeFormatter formatterOut = DateTimeFormatter.ofPattern("MM-dd-yyyy");
+			String dtstr = date.format(formatterOut);
+			/*
+			 * Must have the time on this
+			 */
+			effDate = dtstr + " 00:00:00";
+		}
+		else {
+			effDate = "";
+		}
+		File testFile = new File(pdfFile);
+		String sFileName = testFile.getName();
+		String batchName = "ICC Ingestion - " + FilenameUtils.removeExtension(sFileName);
+		String sortOrder = modelMain.getSortOrder();
+
+		try {
+			uri = new URI("http://esb.gwl.com:8080/bpi/service/ecm/document");
+			uriBuilder = new URIBuilder(uri);
+			uriBuilder.addParameter("source", "FileNet");
+			uriBuilder.addParameter("returnId", "true");
+			uriBuilder.addParameter("contentType", "application/pdf");
+//pvr Change SmartSubmissionPackage to ContractsAgreements for OnBase
+//			uriBuilder.addParameter("documentType", "ContractsAgreements");
+//			uriBuilder.addParameter("fileName", sdocType);
+//			uriBuilder.addParameter("properties", "{\"BatchName\":\"" + batchName + "\",\"groupAccount\":\"" + planNumber + "\",\"PlanName\":\"" + planName + "\",\"DatabaseInstance\":\"" + dbinst + "\",\"CategorySubclass\":\"" + category + "\",\"SortOrder\":\"" + sortOrder + "\",\"DocumentType\":\"Contracts/Agreements/Signature Page\",\"EffectiveDate\":\"" + effDate + "\"}");
+//			uriBuilder.addParameter("subSource", "FASCORE_OS");
+//			uriBuilder.addParameter("userPermissions", "[\"Create\",\"Update\",\"Delete\"]");
+
+//pvr - original setup for PROD_BPI_OS			
+			uriBuilder.addParameter("smart_submission_packages", sdocType);
+			uriBuilder.addParameter("properties", "{\"BatchName\":\"" + batchName + "\",\"PlanNumber\":\"" + planNumber + "\",\"PlanName\":\"" + planName + "\",\"DatabaseInstance\":\"" + dbinst + "\",\"CategorySubclass\":\"" + category + "\",\"SortOrder\":\"" + sortOrder + "\",\"smart_submission_packages\":\"" + sdocType + "\"}");
+			uriBuilder.addParameter("documentType", "SmartSubmissionPackage");
+			uriBuilder.addParameter("documentType", "SmartSubmission");
+			uriBuilder.addParameter("documentType", "Implementation");
+			uriBuilder.addParameter("subSource", "PROD_BPI_OS");
+
+		} catch (URISyntaxException e2) {
+			e2.printStackTrace();
+		}
+		System.out.println(uriBuilder.getQueryParams());
+		HttpPost post = null;
+		try {
+			post = new HttpPost(uriBuilder.build());
+		} catch (URISyntaxException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+
+		/*
+		 * Write out the doc first
+		 */
+		File file = null;
+
+		if (pdfFile != null) {
+			file = new File(pdfFile);
+			if (!file.exists()) {
+				System.out.println("Error - Output file does not exist - " + pdfFile);
+				status = false;
+				setStatusStr("fail");
+				setMessage("Error - Output file does not exist - " + pdfFile);
+				return status;
+			}
+		}
+
+		/*
+		 * Build file part
+		 */
+		byte[] image = null;
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(file);
+			image = fis.readAllBytes();
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		HttpEntity entity = MultipartEntityBuilder.create().addBinaryBody("file", image).build();
+		post.setEntity(entity);
+
+		/*
+		 * Execute the post request
+		 */
+		try {
+			System.out.println(post.getURI().toString());
+			httpResponse = httpClient.execute(post);
+		} catch (ClientProtocolException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println(httpResponse);
+		String httpStatus = null;
+		httpStatus = Integer.toString(httpResponse.getStatusLine().getStatusCode());
+		System.out.println("----------------------------------------");
+		System.out.println(httpResponse.getStatusLine());
+		Header[] hM = httpResponse.getAllHeaders();
+		for (Header header : hM) {
+			System.out.println(header.getName() + " " + header.getValue());
+		}
+		try {
+			fis.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return status;
+
+	}
+
+	/*
+	 * Test POST
+	 */
+	public void doPost() {
+
+		/*
+		 * Get authorization ID from Empower API
+		 */
+		System.out.println("Here");
+		String authorizationID = getAuthorizationID();
+
+		// Replace with the actual API endpoint         
+		final String url = "https://api-dev.gwl.com/content-management/ecm-documents-api/documents?id=76282262";
+
+		// Define the file         
+		String filePath = "H:/MassMutual/TestFiles/999999-01_2_25_20230715_1121MDT.pdf";
+		File file = new File(filePath);         
+		FileSystemResource resource = new FileSystemResource(file);  
+
+		// Types
+		String typeOfDocument = "plan";
+		String mimeType = "application/pdf";
+		HashMap<String, Object> documentProperties = new HashMap<>();
+		HashMap<String, String> documentMap = new HashMap<>();
+		HashMap<String, String> planMap = new HashMap<>();
+
+		planMap.put("number", "932777-01");
+		planMap.put("name", "ecmdocumentsapi-name");
+		planMap.put("source", "401K");
+		documentProperties.put("plan", planMap);
+
+		documentMap.put("batchName", "ecmdocumentapitest");
+		documentMap.put("product", "ecmdocumentapitest");
+		documentMap.put("title", "documentTitle");
+		documentProperties.put("document", documentMap);
+
+		String docuData = "{\n"
+				+ "	\"plan\": \n"
+				+ "		{\n"
+				+ "			\"number\": \"999999-01\",\n"
+				+ "			\"name\": \"Mass Mutual\",\n"
+				+ "			\"source\": \"401K\"\n"
+				+ "		},\n"
+				+ "	\"document\": \n"
+				+ "		{\n"
+				+ "			\"documentTypeCode\": \"testmm\"\n"
+				+ "		}\n"
+				+ "}";
+
+		// Set the request body         
+		MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();         
+		body.add("file", resource);    
+		body.add("typeOfDocument", typeOfDocument);
+		body.add("mimeType", mimeType);
+		body.add("documentProperties", docuData);
+
+		// Set the headers         
+		HttpHeaders headers = new HttpHeaders();         
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+		/*
+		 * Setup authorization ID in POST header for Empower DocuSign API
+		 */
+		headers.add("Authorization", "JWT " + authorizationID);
+
+		// Create the request entity         
+		org.springframework.http.HttpEntity<MultiValueMap<String, Object>> requestEntity = new org.springframework.http.HttpEntity<>(body, headers);
+
+		// Create a RestTemplate         
+		RestTemplate restTemplate = new RestTemplate();
+
+		// Make the HTTP POST request         
+		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+		// Print the response         
+		System.out.println("Response status: " + response.getStatusCode());         
+		System.out.println("Response body: " + response.getBody());
+	}
+
+	public void doGet() {
+
+		/*
+		 * Get authorization ID from Empower API
+		 */
+		String authorizationID = getAuthorizationID();
+
+		final String url = "https://api-dev.gwl.com/content-management/ecm-documents-api/documents?id=76282262";
+		// Replace with the actual API endpoint         
+
+		// Set the headers         
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+
+		/*
+		 * Setup authorization ID in POST header for Empower DocuSign API
+		 */
+		headers.add("Authorization", "JWT " + authorizationID);
+
+		// Create a HttpEntity         
+		org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);         
+
+		// Create a RestTemplate         
+		RestTemplate restTemplate = new RestTemplate();         
+
+		// Make the HTTP GET request         
+		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+		// Print the response         
+		System.out.println("Response status: " + response.getStatusCode());         
+		System.out.println("Response body: " + response.getBody()); 
+	}
+
+	/*
+	 * Send SmartSubmission POST request
+	 * OnBase version
+	 */
+	public boolean sendPostSmartSubmissionOnBase(String pdfFile) {
+
+		status = true;
+
+		/*
+		 * Get current doc
+		 */
+		inputDocFileName = modelMain.getInputDocFileName();
+
+		/*
+		 * Do OnBase
+		 */
+		/*
+		 * Get authorization ID from Empower API
+		 */
+		String authorizationID = getAuthorizationID();
+
+		// Replace with the actual API endpoint         
+		final String url = "https://api-dev.gwl.com/content-management/ecm-documents-api/documents?id=76282262";
+
+		// Define the file         
+		String filePath = "H:/MassMutual/TestFiles/999999-01_2_25_20230715_1121MDT.pdf";
+		File file = new File(pdfFile);         
+		FileSystemResource resource = new FileSystemResource(file);  
+
+		/*
+		 * Set parameter values
+		 */
+		String sdocType = modelMain.getDocumentType();
+		String docGroup = modelMain.getDocumentGroup();
+		String dbinst = modelMain.getDatabaseInstance();
+		String category = modelMain.getCategorySubclass();
+		String planName = modelMain.getPlanName();
+		String planNumber = modelMain.getPlanNumber();
+		String effDate = modelMain.getEffectiveDate();
+		if (!effDate.equals(null) && !effDate.equals("")) {
+			DateTimeFormatter formatterIn = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
+
+			String dateIn = effDate;
+			LocalDate date = LocalDate.parse(dateIn, formatterIn);
+			
+			DateTimeFormatter formatterOut = DateTimeFormatter.ofPattern("MM-dd-yyyy");
+			String dtstr = date.format(formatterOut);
+			/*
+			 * Must have the time on this
+			 */
+			effDate = dtstr + " 00:00:00";
+		}
+		else {
+			effDate = "";
+		}
+
+		// Types
+		String typeOfDocument = "plan";
+		String mimeType = "application/pdf";
+		HashMap<String, Object> documentProperties = new HashMap<>();
+		HashMap<String, String> documentMap = new HashMap<>();
+		HashMap<String, String> planMap = new HashMap<>();
+
+		planMap.put("number", "932777-01");
+		planMap.put("name", "ecmdocumentsapi-name");
+		planMap.put("source", "401K");
+		documentProperties.put("plan", planMap);
+
+		documentMap.put("batchName", "ecmdocumentapitest");
+		documentMap.put("product", "ecmdocumentapitest");
+		documentMap.put("title", "documentTitle");
+		documentProperties.put("document", documentMap);
+
+		String docuData = "{\n"
+				+ "	\"plan\": \n"
+				+ "		{\n"
+				+ "			\"number\": \"999999-01\",\n"
+				+ "			\"name\": \"Mass Mutual\",\n"
+				+ "			\"source\": \"401K\"\n"
+				+ "		},\n"
+				+ "	\"document\": \n"
+				+ "		{\n"
+				+ "			\"documentTypeCode\": \"testmm\"\n"
+				+ "		}\n"
+				+ "}";
+
+		// Set the request body         
+		MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();         
+		body.add("file", resource);    
+		body.add("typeOfDocument", typeOfDocument);
+		body.add("mimeType", mimeType);
+		body.add("documentProperties", docuData);
+
+		// Set the headers         
+		HttpHeaders headers = new HttpHeaders();         
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+		/*
+		 * Setup authorization ID in POST header for Empower DocuSign API
+		 */
+		headers.add("Authorization", "JWT " + authorizationID);
+
+		// Create the request entity         
+		org.springframework.http.HttpEntity<MultiValueMap<String, Object>> requestEntity = new org.springframework.http.HttpEntity<>(body, headers);
+
+		// Create a RestTemplate         
+		RestTemplate restTemplate = new RestTemplate();
+
+		// Make the HTTP POST request         
+		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+		// Print the response         
+		System.out.println("Response status: " + response.getStatusCode());         
+		System.out.println("Response body: " + response.getBody());
+
+		return status;
+
+	}
+
+	/*
+	 * Send ScanSheets POST request
+	 */
+	public boolean sendPostScanSheets(String pdfFile) {
+
+		status = true;
+
+		CloseableHttpClient httpClient = null;
+		CloseableHttpResponse httpResponse = null;
+
+		RequestConfig requestConfig = RequestConfig.custom()
+				.setConnectionRequestTimeout(100000)
+				.setConnectTimeout(100000)
+				.setSocketTimeout(100000)
+				.build();
+		httpClient = HttpClients.custom()
+				.setDefaultRequestConfig(requestConfig)
+				.build();
+
+		/*
+		 * Build the POST request
+		 */
+		URI uri = null;
+		URIBuilder uriBuilder = null;
+
+		/*
+		 * Add parameters to URL
+		 */
+		String sdocType = modelMain.getDocumentType();
+		String docGroup = modelMain.getDocumentGroup();
+		String dbinst = modelMain.getDatabaseInstance();
+		String category = modelMain.getCategorySubclass();
+		String planName = modelMain.getPlanName();
+		String planNumber = modelMain.getPlanNumber();
+		String effDate = modelMain.getEffectiveDate();
+		if (!effDate.equals(null) && !effDate.equals("")) {
+			DateTimeFormatter formatterIn = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
+
+			String dateIn = effDate;
+			LocalDate date;
+			DateTimeFormatter formatterOut;
+			String dtstr;
+			try {
+				date = LocalDate.parse(dateIn, formatterIn);
+				formatterOut = DateTimeFormatter.ofPattern("MM-dd-yyyy");
+				dtstr = date.format(formatterOut);
+				
+				/*
+				 * Must have the time on this
+				 */
+				effDate = dtstr + " 00:00:00";
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				effDate="";
+			}
+			
+		}
+		else {
+			effDate = "";
+		}
+		File testFile = new File(pdfFile);
+		String sFileName = testFile.getName();
+//		String batchName = "ICCPPS" + sFileName;
+		String batchName = "ICC Ingestion - " + FilenameUtils.removeExtension(sFileName);
+		String sortOrder = modelMain.getSortOrder();
+		
+		try {
+			
+			uri = new URI("http://esb.gwl.com:8080/bpi/service/ecm/document");
+			uriBuilder = new URIBuilder(uri);
+			uriBuilder.addParameter("source", "FileNet");
+			uriBuilder.addParameter("returnId", "true");
+			uriBuilder.addParameter("contentType", "application/pdf");
+//pvr Change SmartSubmissionPackage to Compliance for OnBase
+//			uriBuilder.addParameter("documentType", "Plan");
+			uriBuilder.addParameter("documentType", "Plan");
+			uriBuilder.addParameter("fileName", sdocType);
+//			uriBuilder.addParameter("properties", "{\"BatchName\":\"" + batchName + "\",\"PlanNumber\":\"" + planNumber + "\",\"PlanName\":\"" + planName + "\",\"DatabaseInstance\":\"" + dbinst + "\",\"CategorySubclass\":\"" + category + "\",\"SortOrder\":\"" + sortOrder + "\"}");
+			uriBuilder.addParameter("properties", "{\"BatchName\":\"" + batchName + "\",\"groupAccount\":\"" + planNumber + "\",\"PlanName\":\"" + planName + "\",\"DatabaseInstance\":\"" + dbinst + "\",\"CategorySubclass\":\"" + category + "\",\"SortOrder\":\"" + sortOrder + "\",\"EffectiveDate\":\"" + effDate + "\"}");
+			uriBuilder.addParameter("subSource", "PROD_BPI_OS");
+//			uriBuilder.addParameter("subSource", "FASCORE_OS");
+			uriBuilder.addParameter("userPermissions", "[\"Create\",\"Update\",\"Delete\"]");
+
+//pvr			uri = new URI("http://esb.gwl.com:8080/bpi/service/ecm/document");
+//			uriBuilder = new URIBuilder(uri);
+//			uriBuilder.addParameter("source", "FileNet");
+//			uriBuilder.addParameter("returnId", "true");
+//			uriBuilder.addParameter("contentType", "application/pdf");
+//			uriBuilder.addParameter("documentType", "SmartSubmissionPackage");
+//			uriBuilder.addParameter("fileName", sdocType);
+////			uriBuilder.addParameter("properties", "{\"BatchName\":\"" + batchName + "\"PlanNumber\":\"" + planNumber + "\",\"PlanName\":\"" + planName + "\",\"DatabaseInstance\":\"" + dbinst + "\",\"CategorySubclass\":\"" + category + "\"}");
+////			uriBuilder.addParameter("properties", "{\"BatchName\":\"" + batchName + "\"PlanNumber\":\"" + planNumber + "\",\"PlanName\":\"" + planName + "\",\"DatabaseInstance\":\"" + dbinst + "\",\"CategorySubclass\":\"" + category + "\",\"SortOrder\":\"\" + sortOrder + \"\"}");
+//			uriBuilder.addParameter("subSource", "PROD_BPI_OS");
+//			uriBuilder.addParameter("userPermissions", "[\"Create\",\"Update\",\"Delete\"]");
+
+		} catch (URISyntaxException e2) {
+			e2.printStackTrace();
+		}
+		System.out.println(uriBuilder.getQueryParams());
+		HttpPost post = null;
+		try {
+			post = new HttpPost(uriBuilder.build());
+		} catch (URISyntaxException e2) {
+			e2.printStackTrace();
+		}
+
+		/*
+		 * Write out the doc first
+		 */
+		File file = null;
+
+		if (pdfFile != null) {
+			file = new File(pdfFile);
+			if (!file.exists()) {
+				System.out.println("Error - Output file does not exist - " + pdfFile);
+				status = false;
+				setStatusStr("fail");
+				setMessage("Error - Output file does not exist - " + pdfFile);
+				return status;
+			}
+		}
+
+		/*
+		 * Build file part
+		 */
+		byte[] image = null;
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(file);
+			image = fis.readAllBytes();
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		HttpEntity entity = MultipartEntityBuilder.create().addBinaryBody("file", image).build();
+		post.setEntity(entity);
+
+		/*
+		 * Execute the post request
+		 */
+		try {
+			System.out.println(post.getURI().toString());
+			httpResponse = httpClient.execute(post);
+		} catch (ClientProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(httpResponse);
+		String httpStatus = null;
+		httpStatus = Integer.toString(httpResponse.getStatusLine().getStatusCode());
+		System.out.println("----------------------------------------");
+		System.out.println(httpResponse.getStatusLine());
+		Header[] hM = httpResponse.getAllHeaders();
+		for (Header header : hM) {
+			System.out.println(header.getName() + " " + header.getValue());
+		}
+		try {
+			fis.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return status;
+
+	}
+
+	/*
+	 * Initialize various status and message values
+	 */
+	public void clear() {
+		setStatusDateTime(null);
+		setStatusStr(null);
+		setMessage(null);
+	}
+
+	/*
+	 * Get authorization ID for DocuSign POST
+	 */
+	private String getAuthorizationID() {
+
+		String authorizationID = "";
+
+		try {
+
+			/*
+			 * Set up POST request for authorization key
+			 */
+			URL authorizationUrl = null;
+			if (runType.equals("PROD")) {
+				authorizationUrl = new URL("https://backend2-aws.retirementpartner.com:443/security/authenticate/agent");
+			}
+			else if (runType.equals("DEV")) {
+				authorizationUrl = new URL("http://dapps4.gwl.com:8519/security/authenticate/agent");
+			}
+
+			/*
+			 * Define JSON object
+			 */
+			String authorizationJSON = "{\n";
+			if (runType.equals("PROD")) {
+				authorizationJSON = authorizationJSON + "\"username\":\"K_4J0I5\",\n";
+				authorizationJSON = authorizationJSON + "\"password\":\"Empower@2021\"\n";
+			}
+			else if (runType.equals("DEV")) {
+				authorizationJSON = authorizationJSON + "\"username\":\"K_1IN02\",\n";
+				authorizationJSON = authorizationJSON + "\"password\":\"testing1\"\n";
+			}
+			authorizationJSON = authorizationJSON + "}\n";
+
+			/*
+			 * Open connection
+			 */
+			HttpURLConnection connection = (HttpURLConnection) authorizationUrl.openConnection();
+
+			/*
+			 * Setup connection properties
+			 */
+			connection.setDoInput(true);
+			connection.setDoOutput(true);
+			connection.setRequestMethod("POST");
+			connection.setRequestProperty("Content-Type", "application/json");
+			connection.setRequestProperty("Accept", "application/json");
+
+			/*
+			 * Write POST request
+			 */
+			try (OutputStream os = connection.getOutputStream()) {
+				byte[] input = authorizationJSON.getBytes("utf-8");
+				os.write(input, 0, input.length);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			/*
+			 * Get response status
+			 */
+			int status = connection.getResponseCode();
+
+			/*
+			 * Should be 204, no content returned But we will get the authorization key
+			 * returned in a header record
+			 */
+			if (status == HttpURLConnection.HTTP_NO_CONTENT) {
+				authorizationID = connection.getHeaderField("Authorization");
+				System.out.println(authorizationID);
+			}
+			connection.disconnect();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return authorizationID;
+	}
+
+	/*
+	 * Main for testing class
+	 */
+	public static void main(String[] args) throws Exception {
+	}
+
+}
+
+
+
+
+
 {
 	"Version": "2012-10-17",
 	"Statement": [
