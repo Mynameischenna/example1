@@ -1,3 +1,367 @@
+/*
+ * Class: ECMStore
+ * Author: Paul Raab
+ * Date: January 9, 2023
+ * Group: HRLC
+ * Main application for loading files into Empower ECM.
+ * Replaces ContentCollector
+ */
+package com.hrlc.compliance.ecmstore;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
+import org.apache.commons.io.FilenameUtils;
+
+public class ECMStore {
+
+	private static Logger logger = null;
+
+	/*
+	 * Setup for DEV or PROD
+	 */
+	//	private static String runType = "PROD";
+	//	private static String runType = "DEV";
+	private static String runType = "UAT";
+
+	public static void main(String[] args) {
+
+		ModelMain modelMain = new ModelMain();
+		ParseXML parseXML = new ParseXML(modelMain);
+		//		PostAPI postAPI = new PostAPI(modelMain);
+		PostAPINew postAPI = new PostAPINew(modelMain);
+		Hashtable<String,String> xmlFileHash = new Hashtable<>();
+		Hashtable<String,String> docFileHash = new Hashtable<>();
+
+		/*
+		 * Do Compliance job
+		 */
+		String imageDir = "";
+		String imageDirCompleted = "";
+
+		if (runType.equals("PROD")) {
+			imageDir = "V:\\auto\\NewImaging\\Imaging";
+			imageDirCompleted = "V:\\auto\\NewImaging\\Imaging\\Success\\";
+		}
+		else if (runType.equals("DEV")) {
+			imageDir = "V:\\auto\\NewImaging\\Imaging\\Test";
+			imageDirCompleted = "V:\\auto\\NewImaging\\Imaging\\Test\\Success\\";
+		}
+		else if (runType.equals("UAT")) {
+			imageDir = "V:\\auto\\NewImaging\\Imaging\\Test";
+			imageDirCompleted = "V:\\auto\\NewImaging\\Imaging\\Test\\Success\\";
+		}
+		xmlFileHash.clear();
+		docFileHash.clear();
+		modelMain.getFiles(imageDir, xmlFileHash, docFileHash);
+		logger = modelMain.getLogger();
+		
+		/*
+		 * Loop through all files
+		 */
+		Enumeration<String> e = xmlFileHash.keys();
+		while (e.hasMoreElements()) {
+			String key = e.nextElement();
+			String xmlFile = xmlFileHash.get(key);
+			String pdfFile = docFileHash.get(key);
+			parseXML.clearXML();
+			parseXML.readXML(xmlFile);
+			/*
+			 * Check for null file in either PDF or XML
+			 */
+			if (pdfFile == null || xmlFile == null) {
+				continue;
+			}
+			logger.info("Compliance");
+			logger.info("Processing XML " + xmlFile + " - PDF " + pdfFile);
+
+			boolean status = postAPI.sendPostCompliance(pdfFile);
+			try {
+				LocalDateTime todayDT = LocalDateTime.now();
+				System.out.println("LocalDateTime : "
+						+ todayDT);
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+				String dtstr = todayDT.format(formatter);
+				File xmlFileMove = new File(xmlFile);
+				String xmlPath = xmlFileMove.getParent();
+				String xmlName = xmlFileMove.getName();
+				/*
+				 * If production, move files
+				 */
+				if (runType.equals(("PROD"))) {
+					Path temp1 = Files.move
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Success\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml.processed"));
+				}
+				else if (runType.equals(("DEV"))) {
+					Path temp1 = Files.copy
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Success\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml.processed"));
+				}
+				else if (runType.equals(("UAT"))) {
+					Path temp1 = Files.copy
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Success\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml.processed"));
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			try {
+				LocalDateTime todayDT = LocalDateTime.now();
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+				String dtstr = todayDT.format(formatter);
+				File pdfFileMove = new File(pdfFile);
+				String pdfPath = pdfFileMove.getParent();
+				String pdfName = pdfFileMove.getName();
+				if (runType.equals(("PROD"))) {
+					Path temp2 = Files.move
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Success\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf.processed"));
+				}
+				else if (runType.equals(("DEV"))) {
+					Path temp2 = Files.copy
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Success\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf.processed"));
+				}
+				else if (runType.equals(("UAT"))) {
+					Path temp2 = Files.copy
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Success\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf.processed"));
+				}
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
+		}
+
+		/*
+		 * Do SmartSubmission job
+		 */
+		if (runType.equals("PROD")) {
+			imageDir = "V:\\auto\\NewImaging\\PlanExpress\\";
+			imageDirCompleted = "V:\\auto\\NewImaging\\PlanExpress\\Completed\\SmartSubmission\\";
+		}
+		else if (runType.equals("DEV")) {
+			imageDir = "V:\\auto\\NewImaging\\PlanExpress\\Test\\";
+			imageDirCompleted = "V:\\auto\\NewImaging\\PlanExpress\\Test\\Completed\\";
+		}
+		else if (runType.equals("UAT")) {
+			imageDir = "V:\\auto\\NewImaging\\PlanExpress\\Test\\";
+			imageDirCompleted = "V:\\auto\\NewImaging\\PlanExpress\\Test\\Completed\\";
+		}
+		xmlFileHash.clear();
+		docFileHash.clear();
+		modelMain.getFiles(imageDir, xmlFileHash, docFileHash);
+
+		/*
+		 * Loop through all files
+		 */
+		e = xmlFileHash.keys();
+		while (e.hasMoreElements()) {
+			String key = e.nextElement();
+			String xmlFile = xmlFileHash.get(key);
+			String pdfFile = docFileHash.get(key);
+			parseXML.clearXML();
+			parseXML.readXML(xmlFile);
+			/*
+			 * Check for null file in either PDF or XML
+			 */
+			if (pdfFile == null || xmlFile == null) {
+				continue;
+			}
+			logger.info("SmartSubmission");
+			logger.info("Processing XML " + xmlFile + " - PDF " + pdfFile);
+
+			boolean status = postAPI.sendPostSmartSubmission(pdfFile);
+			try {
+				LocalDateTime todayDT = LocalDateTime.now();
+				System.out.println("LocalDateTime : "
+						+ todayDT);
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+				String dtstr = todayDT.format(formatter);
+				File xmlFileMove = new File(xmlFile);
+				String xmlPath = xmlFileMove.getParent();
+				String xmlName = xmlFileMove.getName();
+				if (runType.equals(("PROD"))) {
+					Path temp1 = Files.move
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Completed\\SmartSubmission\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml.processed"));
+				}
+				else if (runType.equals(("DEV"))) {
+					Path temp1 = Files.copy
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Completed\\SmartSubmission\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml.processed"));
+				}
+				else if (runType.equals(("UAT"))) {
+					Path temp1 = Files.copy
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Completed\\SmartSubmission\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml.processed"));
+				}
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try {
+				LocalDateTime todayDT = LocalDateTime.now();
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+				String dtstr = todayDT.format(formatter);
+				File pdfFileMove = new File(pdfFile);
+				String pdfPath = pdfFileMove.getParent();
+				String pdfName = pdfFileMove.getName();
+				if (runType.equals(("PROD"))) {
+					Path temp2 = Files.move
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Completed\\SmartSubmission\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf.processed"));
+				}
+				else if (runType.equals(("DEV"))) {
+					Path temp2 = Files.copy
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Completed\\SmartSubmission\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf.processed"));
+				}
+				else if (runType.equals(("UAT"))) {
+					Path temp2 = Files.copy
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Completed\\SmartSubmission\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf.processed"));
+				}
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
+		}
+
+		/*
+		 * Do ScanSheets job
+		 */
+		if (runType.equals("PROD")) {
+			imageDir = "V:\\auto\\NewImaging\\online\\";
+			imageDirCompleted = "V:\\auto\\NewImaging\\online\\Completed\\";
+		}
+		else if (runType.equals("DEV")) {
+			imageDir = "V:\\auto\\NewImaging\\online\\Test\\";
+			imageDirCompleted = "V:\\auto\\NewImaging\\online\\Test\\Completed\\";
+		}
+		else if (runType.equals("UAT")) {
+			imageDir = "V:\\auto\\NewImaging\\online\\Test\\";
+			imageDirCompleted = "V:\\auto\\NewImaging\\online\\Test\\Completed\\";
+		}
+		xmlFileHash.clear();
+		docFileHash.clear();
+		modelMain.getFiles(imageDir, xmlFileHash, docFileHash);
+
+		/*
+		 * Loop through all files
+		 */
+		e = xmlFileHash.keys();
+		while (e.hasMoreElements()) {
+			String key = e.nextElement();
+			String xmlFile = xmlFileHash.get(key);
+			String pdfFile = docFileHash.get(key);
+			parseXML.clearXML();
+			parseXML.readXML(xmlFile);
+			/*
+			 * Check for null file in either PDF or XML
+			 */
+			if (pdfFile == null || xmlFile == null) {
+				continue;
+			}
+			logger.info("ScanSheets");
+			logger.info("Processing XML " + xmlFile + " - PDF " + pdfFile);
+
+			boolean status = postAPI.sendPostScanSheets(pdfFile);
+			try {
+				LocalDateTime todayDT = LocalDateTime.now();
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+				String dtstr = todayDT.format(formatter);
+				File xmlFileMove = new File(xmlFile);
+				String xmlPath = xmlFileMove.getParent();
+				String xmlName = xmlFileMove.getName();
+				if (runType.equals(("PROD"))) {
+					Path temp1 = Files.move
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Completed\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml"));
+				}
+				else if (runType.equals(("DEV"))) {
+					Path temp1 = Files.copy
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Completed\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml"));
+				}
+				else if (runType.equals(("UAT"))) {
+					Path temp1 = Files.copy
+							(Paths.get(xmlFile),
+									Paths.get(xmlPath + "\\Completed\\" + 
+											FilenameUtils.removeExtension(xmlName) + "_" + dtstr + ".xml"));
+				}
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try {
+				LocalDateTime todayDT = LocalDateTime.now();
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+				String dtstr = todayDT.format(formatter);
+				File pdfFileMove = new File(pdfFile);
+				String pdfPath = pdfFileMove.getParent();
+				String pdfName = pdfFileMove.getName();
+				if (runType.equals(("PROD"))) {
+					Path temp2 = Files.move
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Completed\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf"));
+				}
+				else if (runType.equals(("DEV"))) {
+					Path temp2 = Files.copy
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Completed\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf"));
+				}
+				else if (runType.equals(("UAT"))) {
+					Path temp2 = Files.copy
+							(Paths.get(pdfFile),
+									Paths.get(pdfPath + "\\Completed\\" + 
+											FilenameUtils.removeExtension(pdfName) + "_" + dtstr + ".pdf"));
+				}
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
+		}
+		modelMain.closeLog();
+
+
+	}
+
+}
+
+
+
+
 package com.hrlc.compliance.ecmstore;
 import java.io.File;
 import java.io.FileInputStream;
