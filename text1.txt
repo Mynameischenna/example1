@@ -1,3 +1,71 @@
+	public boolean sendPostScanSheets(String pdfFile) {
+
+		status = true;
+
+		inputDocFileName = modelMain.getInputDocFileName();
+
+		/*
+		 * Get authorization ID from Empower API
+		 */
+		String authorizationID = getAuthorizationID();
+
+		// Replace with the actual API endpoint         
+		String url = "";
+		if (runType.equals(("PROD"))) {
+			url = "https://api.gwl.com/content-management/ecm-documents-api/documents";
+		}
+		else if (runType.equals(("DEV"))) {
+			url = "https://api-dev.gwl.com/content-management/ecm-documents-api/documents";
+		}
+
+		// Define the file         
+		File file = new File(pdfFile);         
+		FileSystemResource resource = new FileSystemResource(file);  
+
+		// Types
+		String typeOfDocument = "plan";
+		String mimeType = "application/pdf";
+
+		/*
+		 * Build docuData
+		 */
+		String docuData = "";
+		docuData = buildDocuData(resource);
+
+		// Set the request body         
+		MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();         
+		body.add("file", resource);    
+		body.add("typeOfDocument", typeOfDocument);
+		body.add("mimeType", mimeType);
+		body.add("documentProperties", docuData);
+
+		// Set the headers         
+		HttpHeaders headers = new HttpHeaders();         
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+		/*
+		 * Setup authorization ID in POST header for Empower DocuSign API
+		 */
+		headers.add("Authorization", "JWT " + authorizationID);
+
+		// Create the request entity         
+		HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+		// Create a RestTemplate         
+		RestTemplate restTemplate = new RestTemplate();
+
+		// Make the HTTP POST request         
+		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+		// Print the response         
+		System.out.println("Response status: " + response.getStatusCode());         
+		System.out.println("Response body: " + response.getBody());
+
+		return status;
+	}
+
+
+
 /*
  * Class: ECMStore
  * Author: Paul Raab
