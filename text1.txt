@@ -1,3 +1,37 @@
+
+public ResponseEntity<byte[]> getPDF(String filename) throws Exception {
+    // Retrieve the file based on the provided filename
+    File file = new File(filename); // Assuming the filename is the full path or relative path to the file
+    
+    // Check if the file exists
+    if (!file.exists()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
+    try {
+        // Read the file content into a byte array
+        byte[] fileContent = Files.readAllBytes(file.toPath());
+
+        // Check if the file content is empty
+        if (fileContent == null || fileContent.length == 0) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        // Set the dynamic filename for the response header
+        String dynamicFilename = filename; // You can modify this to extract just the file name if needed
+
+        // Return the file content as a response with the proper headers
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dynamicFilename + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+                .body(fileContent);
+
+    } catch (IOException e) {
+        // Handle the exception and return an error response
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+    }
+
+
 public ResponseEntity<byte[]> getPDF(Long id) throws Exception {
         File file = getFile(fileName);
         FileSystemResource resource = new FileSystemResource(file);
