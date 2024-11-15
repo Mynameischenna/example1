@@ -1,3 +1,19 @@
+public String buildJsonFromModelMain(ModelMain modelMain) {
+    String planName = modelMain.getPlanName();
+    String groupID = modelMain.getGroupID();
+
+    // Build JSON as a String
+    String json = "{\n" +
+            "    \"plan\": {\n" +
+            "        \"name\": \"" + planName + "\",\n" +
+            "        \"number\": \"" + groupID + "\"\n" +
+            "    }\n" +
+            "}";
+
+    return json;
+}
+
+
 package com.hrlc.compliance.ecmstore;
 import java.io.File;
 import java.io.FileInputStream;
