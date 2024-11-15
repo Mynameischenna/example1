@@ -1,3 +1,26 @@
+public ResponseEntity<byte[]> getPDF(Long id) throws Exception {
+        File file = getFile(fileName);
+        FileSystemResource resource = new FileSystemResource(file);
+        
+        byte[] fileContent;
+        
+        try {
+            // Check if file content is null or empty
+            if (fileContent == null || fileContent.length == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+
+            String dynamicFilename = fileName;
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dynamicFilename + "\"") // Set the desired filename
+                    .header(HttpHeaders.CONTENT_TYPE, "application/pdf") // Set the content type for PDF
+                    .body(fileContent);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+    }
+
 package com.ecm1.ECM1;
 
 import org.apache.poi.ss.usermodel.Row;
