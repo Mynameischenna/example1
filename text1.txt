@@ -1,3 +1,292 @@
+package com.ecm1.ECM1;
+
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.util.*;
+
+@Service
+public class ECMservice {
+    private final String runType ="PROD";
+    HashMap<String, Integer> user = new HashMap<>();
+
+    @Autowired
+    private ECMRepo userRepository;
+
+
+    public void processFile(String filePath) throws Exception {
+        try (InputStream inputStream = new FileInputStream(filePath)) {
+            List<ModelMain> rows = parseExcelFile(inputStream);
+            postApi(rows);
+            for(ModelMain cell : rows){
+                System.out.println(cell);
+//            userRepository.saveAll(users)
+            };
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Error processing file: " + e.getMessage());
+        }
+    }
+
+    private List<ModelMain> parseExcelFile(InputStream inputStream) throws Exception {
+        List<ModelMain> userList = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);  // Assume the first sheet contains data
+            // only parsing 4 rows in excel (testing)
+            int i = 1;
+            int maxRows = 4;
+             while(i <= maxRows){
+                 Row row = sheet.getRow(i);
+                if (row.getRowNum() == 0) {  // Skip the header row
+                    continue;
+                }
+
+                // Extract data from each cell
+                String plan_name =  row.getCell(5).getStringCellValue();
+                String  plan_number = row.getCell(4).getStringCellValue();
+
+
+                // Get the associated file
+//                File file = getFile(plan_number);
+//                System.out.println("file is "+file.getName());
+
+                // Read file content as byte array (binary data)
+//                byte[] fileContent = Files.readAllBytes(file.toPath());
+
+                // Create an ECM object and add it to the list with file content
+                 ModelMain user = new ModelMain(plan_number, plan_name);
+                userList.add(user);
+                i++;
+            }
+            return userList;
+        }
+
+    }
+
+    String fileName = "";
+    public File getFile(String planNumber) throws Exception {
+        int count = user.getOrDefault(planNumber, 1);
+
+        // Use zero-padded format if necessary; ensure to match your file naming
+        fileName = String.format("%d_PRU_%02d_6_20231218_1553MST.pdf", planNumber, count); // Adjusted to include ".pdf"
+
+        String directoryPath = "C:\\ECM\\PVR\\";
+        File file = new File(directoryPath, fileName);
+
+        // Check if the file exists
+        if (!file.exists()) {
+            throw new Exception("File not found: " + file.getAbsolutePath());
+        }
+
+        // Increment the count for next call
+        user.put(planNumber, count + 1);
+        return file;
+    }
+
+    public ResponseEntity<byte[]> getPDF(Long id) throws Exception {
+        Optional<ECM> ecmOptional = userRepository.findById(id);
+        byte[] fileContent;
+        if (ecmOptional.isPresent()) {
+            fileContent = ecmOptional.get().getFileContent();
+        } else {
+            throw new Exception("File not found for ID: " + id);
+        }
+        try {
+            // Check if file content is null or empty
+            if (fileContent == null || fileContent.length == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+
+            String dynamicFilename = fileName;
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dynamicFilename + "\"") // Set the desired filename
+                    .header(HttpHeaders.CONTENT_TYPE, "application/pdf") // Set the content type for PDF
+                    .body(fileContent);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+    }
+    public void postApi(List<ModelMain> rows ) throws Exception {
+        for(ModelMain cell : rows){
+            sendPostScanSheets(cell);
+        }
+    }
+    boolean status ;
+    public boolean sendPostScanSheets(ModelMain currCell) throws Exception {
+
+        status = true;
+
+//        inputDocFileName = modelMain.getInputDocFileName();
+
+        /*
+         * Get authorization ID from Empower API
+         */
+        String authorizationID = getAuthorizationID();
+
+        // Replace with the actual API endpoint
+        String url = "";
+        if (runType.equals(("PROD"))) {
+            url = "https://api.gwl.com/content-management/ecm-documents-api/documents";
+        }
+        else if (runType.equals(("DEV"))) {
+            url = "https://api-dev.gwl.com/content-management/ecm-documents-api/documents";
+        }
+
+        // get the file from plannumber
+        File file = getFile(currCell.getPlanNumber());
+        FileSystemResource resource = new FileSystemResource(file);
+
+        // Types
+        String typeOfDocument = "plan";
+        String mimeType = "application/pdf";
+
+        /*
+            meta data of document in json
+        */
+        String docuData = "";
+        docuData = buildJsonFromModelMain(currCell);
+
+        // Set the request body
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", resource);
+        body.add("typeOfDocument", typeOfDocument);
+        body.add("mimeType", mimeType);
+        body.add("documentProperties", docuData);
+
+        // Set the headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        /*
+         * Setup authorization ID in POST header for Empower DocuSign API
+         */
+        headers.add("Authorization", "JWT " + authorizationID);
+
+        // Create the request entity
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        // Create a RestTemplate
+        RestTemplate restTemplate = new RestTemplate();
+
+        // Make the HTTP POST request
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+        // Print the response
+        System.out.println("Response status: " + response.getStatusCode());
+        System.out.println("Response body: " + response.getBody());
+
+        return status;
+    }
+    public String buildJsonFromModelMain(ModelMain modelMain) {
+        String planName = modelMain.getPlanName();
+        String planNumber = modelMain.getPlanNumber();
+
+        // Build JSON as a String
+        String json = "{\n" +
+                "    \"plan\": {\n" +
+                "        \"name\": \"" + planName + "\",\n" +
+                "        \"number\": \"" + planNumber + "\"\n" +
+                "    }\n" +
+                "}";
+
+        return json;
+    }
+    /*
+     * Get authorization ID for DocuSign POST
+     */
+    private String getAuthorizationID() {
+
+        String authorizationID = "";
+
+        try {
+
+            /*
+             * Set up POST request for authorization key
+             */
+            URL authorizationUrl = null;
+            if (runType.equals("PROD")) {
+                authorizationUrl = new URL("https://backend2-aws.retirementpartner.com:443/security/authenticate/agent");
+            }
+            else if (runType.equals("DEV")) {
+                authorizationUrl = new URL("http://dapps4.gwl.com:8519/security/authenticate/agent");
+            }
+
+            /*
+             * Define JSON object
+             */
+            String authorizationJSON = "{\n";
+            if (runType.equals("PROD")) {
+                authorizationJSON = authorizationJSON + "\"username\":\"K_4J0I5\",\n";
+                authorizationJSON = authorizationJSON + "\"password\":\"Empower@2021\"\n";
+            }
+            else if (runType.equals("DEV")) {
+                authorizationJSON = authorizationJSON + "\"username\":\"K_1IN02\",\n";
+                authorizationJSON = authorizationJSON + "\"password\":\"testing1\"\n";
+            }
+            authorizationJSON = authorizationJSON + "}\n";
+
+            /*
+             * Open connection
+             */
+            HttpURLConnection connection = (HttpURLConnection) authorizationUrl.openConnection();
+
+            /*
+             * Setup connection properties
+             */
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+
+            /*
+             * Write POST request
+             */
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = authorizationJSON.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            /*
+             * Get response status
+             */
+            int status = connection.getResponseCode();
+
+            /*
+             * Should be 204, no content returned But we will get the authorization key
+             * returned in a header record
+             */
+            if (status == HttpURLConnection.HTTP_NO_CONTENT) {
+                authorizationID = connection.getHeaderField("Authorization");
+                System.out.println(authorizationID);
+            }
+            connection.disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return authorizationID;
+    }
+
+}
+
+
+
 public String buildJsonFromModelMain(ModelMain modelMain) {
     String planName = modelMain.getPlanName();
     String groupID = modelMain.getGroupID();
