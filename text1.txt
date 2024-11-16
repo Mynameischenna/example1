@@ -1,4 +1,33 @@
-   public ResponseEntity<byte[]> getPDF(String filename) throws Exception {
+        // Construct the regex pattern to match the file name
+        String regex = String.format("%s_PRU_%02d_\\d_\\d{8}_\\d{4}[A-Z]{3}\\.pdf", planNumber, count);
+
+        // Compile the pattern
+        Pattern pattern = Pattern.compile(regex);
+
+        // List all files in the directory
+        File directory = new File(directoryPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            System.out.println("Invalid directory path!");
+            return null;
+        }
+
+        // Filter files using the regex pattern
+        File[] matchingFiles = directory.listFiles((dir, name) -> pattern.matcher(name).matches());
+
+        // Return the first matching file if found
+        if (matchingFiles != null && matchingFiles.length > 0) {
+            return matchingFiles[0]; // Assuming only one file matches
+        }
+
+        // If no file matches, return null
+        System.out.println("No matching file found!");
+        return null;
+
+
+
+
+
+public ResponseEntity<byte[]> getPDF(String filename) throws Exception {
         // Retrieve the file based on the provided filename
         String directoryPath = "C:\\ECM\\docs\\";
         File file = new File(directoryPath, fileName); // Assuming the filename is the full path or relative path to the file
