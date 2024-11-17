@@ -1,3 +1,65 @@
+public boolean sendPostScanSheets(ModelMain currCell) throws Exception {
+    status = true;
+
+    String authorizationID = getAuthorizationID();
+
+    String url = "";
+    if (runType.equals(("PROD"))) {
+        url = "https://api.gwl.com/content-management/ecm-documents-api/documents";
+    } else if (runType.equals(("DEV"))) {
+        url = "https://api-dev.gwl.com/content-management/ecm-documents-api/documents";
+    }
+
+    // Get the file associated with the plan number
+    File file = getFile(currCell.getPlanNumber());
+    if (file == null || !file.exists()) {
+        throw new Exception("File not found for plan number: " + currCell.getPlanNumber());
+    }
+
+    // Read file content into a byte array
+    byte[] fileContent = Files.readAllBytes(file.toPath());
+
+    // Prepare document metadata
+    String docuData = buildJsonFromModelMain(currCell);
+
+    // Use ByteArrayResource for file content
+    ByteArrayResource resource = new ByteArrayResource(fileContent) {
+        @Override
+        public String getFilename() {
+            return file.getName(); // Set the file name
+        }
+    };
+
+    // Set up the request body
+    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+    body.add("file", resource); // Add PDF file content
+    body.add("typeOfDocument", "plan");
+    body.add("mimeType", "application/pdf");
+    body.add("documentProperties", docuData); // Add metadata as JSON
+
+    // Set up headers
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+    headers.add("Authorization", "JWT " + authorizationID);
+
+    // Create the HTTP entity
+    HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+    // Use RestTemplate to make the POST request
+    RestTemplate restTemplate = new RestTemplate();
+    ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+    // Print response details
+    System.out.println("Response status: " + response.getStatusCode());
+    System.out.println("Response body: " + response.getBody());
+
+    return response.getStatusCode().is2xxSuccessful();
+}
+
+
+
+
+
 package com.ecm1.ECM1;
 
 import org.apache.poi.ss.usermodel.Row;
