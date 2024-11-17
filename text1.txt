@@ -17,6 +17,62 @@ public File getFile(String planNumber) throws Exception {
 
     // Check if the directory is valid
     if (!directory.exists() || !directory.isDirectory()) {
+        System.out.println("Invalid directory path: " + directoryPath);
+        return null;
+    }
+
+    // List and print all files in the directory
+    File[] allFiles = directory.listFiles();
+    if (allFiles == null || allFiles.length == 0) {
+        System.out.println("The directory is empty.");
+        return null;
+    }
+
+    System.out.println("Files in the directory:");
+    for (File file : allFiles) {
+        if (file.isFile()) {
+            System.out.println(file.getName());
+        }
+    }
+
+    // Filter files in the directory matching the regex pattern
+    File[] matchingFiles = directory.listFiles((dir, name) -> pattern.matcher(name).matches());
+
+    // Return the first matching file if found
+    if (matchingFiles != null && matchingFiles.length > 0) {
+        System.out.println("Found file name: " + matchingFiles[0].getName());
+        return matchingFiles[0];
+    }
+
+    // If no file matches, increment the count for future calls
+    user.put(planNumber, count + 1);
+
+    // Print a message indicating no file was found
+    System.out.println("No matching file found!");
+    return null;
+}
+
+
+
+public File getFile(String planNumber) throws Exception {
+    // Retrieve the current count for the plan number
+    int count = user.getOrDefault(planNumber, 1);
+
+    // Construct the regex pattern dynamically
+    String regex = String.format("%s_PRU_\\d_\\d_\\d{8}_\\d{4}MST\\.pdf", planNumber);
+
+    // Print the regex for debugging
+    System.out.println("Regex: " + regex);
+
+    // Compile the pattern
+    Pattern pattern = Pattern.compile(regex);
+
+    // Define the directory path
+    String directoryPath = "C:\\ECM\\PVR\\All_20231218_1552MST\\";
+    File directory = new File(directoryPath);
+
+    // Check if the directory is valid
+    if (!directory.exists() || !directory.isDirectory()) {
         System.out.println("Invalid directory path!");
         return null;
     }
