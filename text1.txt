@@ -1,3 +1,10 @@
+org.springframework.web.client.HttpServerErrorException$InternalServerError: 500 : "{"error":{"code":"E-000","message":"INVALID_REQUEST:JsonProcessingException documentProperties likely a field is unknown:Unrecognized field \"RK - DBINST\" (class com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties), not marked as ignorable (3 known properties: \"plan\", \"participant\", \"document\"])\n at [Source: (String)\"{\n    \"plan\": {\n        \"name\": \"Bob Johnson Group Retirement Savings Plan\",\n        \"number\": \"591121-01\"\n    },\n    \"RK - DBINST\": \"some_value\"\n}\"; line: 6, column: 21] (through reference chain: com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties[\"RK - DBINST\"])","details":[{"field":null,"issue":"INVALID_REQUEST:JsonProcessingException documentProperties likely a field is unknown:Unrecognized field \"RK - DBINST\" (class com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties), not marked as ignorable (3 known properties: \"plan\", \"participant\", \"document\"])\n at [Source: (String)\"{\n    \"plan\": {\n        \"name\": \"Bob Johnson Group Retirement Savings Plan\",\n        \"number\": \"591121-01\"\n    },\n    \"RK - DBINST\": \"some_value\"\n}\"; line: 6, column: 21] (through reference chain: com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties[\"RK - DBINST\"])","location":null,"hint":null}],"link":null,"correlationId":"673f57f30133798b3d46067f4763c5ab"}}"
+	at org.springframework.web.client.HttpServerErrorException.create(HttpServerErrorException.java:102)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:186)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:137)
+	at org.springframework
+
+
 public String buildJsonFromModelMain(ModelMain modelMain) {
     // Retrieve the required fields from ModelMain
     String planName = modelMain.getPlanName();
