@@ -1,3 +1,23 @@
+public String buildJsonFromModelMain(ModelMain modelMain) {
+    String planName = modelMain.getPlanName();
+    String planNumber = modelMain.getPlanNumber();
+
+    // Build JSON as a String
+    String json = "{\n" +
+                  "    \"plan\": {\n" +
+                  "        \"name\": \"" + planName + "\",\n" +
+                  "        \"number\": \"" + planNumber + "\",\n" +  // Added a comma here
+                  "        \"category\": \"MassMutual\"\n" +
+                  "    }\n" +
+                  "}";
+
+    return json;
+}
+
+
+
+
+
 package com.ecm1.ECM1;
 
 import org.apache.poi.ss.usermodel.Row;
