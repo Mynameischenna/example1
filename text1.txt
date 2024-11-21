@@ -1,3 +1,24 @@
+public String buildJsonFromModelMain(ModelMain modelMain) {
+    // Retrieve the required fields from ModelMain
+    String planName = modelMain.getPlanName();
+    String planNumber = modelMain.getPlanNumber();
+    
+    // Assume that you need to include more fields such as "RK - DBINST"
+    String rkDbinst = "some_value"; // Replace with actual value or logic to fetch it
+
+    // Create the JSON body with all required fields
+    return "{\n" +
+            "    \"plan\": {\n" +
+            "        \"name\": \"" + planName + "\",\n" +
+            "        \"number\": \"" + planNumber + "\"\n" +
+            "    },\n" +
+            "    \"RK - DBINST\": \"" + rkDbinst + "\"\n" +  // Include RK - DBINST here
+            "}";
+}
+
+
+
+
 
     public boolean sendPostScanSheets(ModelMain currCell) throws Exception {
         String authorizationID = getAuthorizationID();
