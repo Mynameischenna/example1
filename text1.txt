@@ -1,3 +1,25 @@
+public String buildJsonFromModelMain(ModelMain modelMain) {
+    String planName = modelMain.getPlanName();
+    String planNumber = modelMain.getPlanNumber();
+
+    // Assuming [RK - DBINST] is a required field, you should populate it accordingly
+    String rkDbInst = "some_value"; // Replace this with the actual value
+
+    // Build JSON as a String
+    String json = "{\n" +
+            "    \"plan\": {\n" +
+            "        \"name\": \"" + planName + "\",\n" +
+            "        \"number\": \"" + planNumber + "\",\n" +
+            "        \"RK - DBINST\": \"" + rkDbInst + "\"\n" +  // Added the missing field
+            "    }\n" +
+            "}";
+
+    return json;
+}
+
+
+
+
 Add a Document
 
 REST method POST – adds a document to the ECM
