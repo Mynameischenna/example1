@@ -1,3 +1,304 @@
+package com.ecm1.ECM1;
+
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.regex.Pattern;
+
+@Service
+public class ECMservice {
+    private final String runType = "PROD";
+    HashMap<String, Integer> user = new HashMap<>();
+
+    public void processFile(String filePath) throws Exception {
+        try (InputStream inputStream = new FileInputStream(filePath)) {
+            // get the list of rows
+            List<ModelMain> rows = parseExcelFile(inputStream);
+//            postApi(rows);
+            for (ModelMain cell : rows) {
+                System.out.println(cell);
+            };
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Error processing file: " + e.getMessage());
+        }
+    }
+
+    private List<ModelMain> parseExcelFile(InputStream inputStream) throws Exception {
+        List<ModelMain> excelRows = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);  // Assume the first sheet contains data
+            // only parsing 4 rows in excel (testing)
+            int i = 1;
+            int maxRows = 4;
+            while (i <= maxRows) {
+
+                Row row = sheet.getRow(i);
+                if (row == null) {  // Skip row if its empty
+                    continue;
+                }
+                // Extract data from each cell
+                String plan_name = row.getCell(5).getStringCellValue();
+                String plan_number = row.getCell(4).getStringCellValue();
+//
+//                // Get the associated file
+                File file = getFile(plan_number);
+
+                // Create an ModelMain object and add it to the list with file content
+                ModelMain ecm = new ModelMain(plan_number, plan_name);
+                excelRows.add(ecm);
+                i++;
+            }
+            return excelRows;
+        }
+
+    }
+
+    public File getFile(String planNumber) throws Exception {
+        // Retrieve the current count for the plan number
+        int count = user.getOrDefault(planNumber, 1);
+
+        // Construct the regex pattern dynamically
+        String regex = String.format("%s_PRU_%d_\\d_\\d{8}_\\d{4}MST\\.pdf", planNumber,count);
+
+        // Print the regex for debugging
+        System.out.println("Regex: " + regex);
+
+        // Compile the pattern
+        Pattern pattern = Pattern.compile(regex);
+
+        // Define the directory path
+        String directoryPath = "C:\\ECM\\PVR\\All_20231218_1552MST\\";
+        File directory = new File(directoryPath);
+
+        // Filter files in the directory matching the regex pattern
+        File[] matchingFiles = directory.listFiles((dir, name) -> pattern.matcher(name).matches());
+
+        // Return the first matching file if found
+        if (matchingFiles != null && matchingFiles.length > 0) {
+            user.put(planNumber, count + 1);
+            System.out.println("Found file name: " + matchingFiles[0].getName());
+            return matchingFiles[0];
+        }
+        // if file not found
+        return null;
+
+    }
+
+    public void postApi(List<ModelMain> rows) throws Exception {
+        for (ModelMain cell : rows) {
+            sendPostScanSheets(cell);
+        }
+    }
+
+    boolean status;
+
+    public boolean sendPostScanSheets(ModelMain currCell) throws Exception {
+        status = true;
+
+        String authorizationID = getAuthorizationID();
+
+        String url = "";
+        if (runType.equals(("PROD"))) {
+            url = "https://api.gwl.com/content-management/ecm-documents-api/documents";
+        } else if (runType.equals(("DEV"))) {
+            url = "https://api-dev.gwl.com/content-management/ecm-documents-api/documents";
+        }
+
+        // Get the file associated with the plan number
+        File file = getFile(currCell.getPlanNumber());
+        if (file == null || !file.exists()) {
+            throw new Exception("File not found for plan number: " + currCell.getPlanNumber());
+        }
+
+        // Read file content into a byte array
+        byte[] fileContent = Files.readAllBytes(file.toPath());
+
+        // Prepare document metadata
+        String docuData = buildJsonFromModelMain(currCell);
+
+        // Use ByteArrayResource for file content
+        ByteArrayResource resource = new ByteArrayResource(fileContent) {
+            @Override
+            public String getFilename() {
+                return file.getName(); // Set the file name
+            }
+        };
+
+        // Set up the request body
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", resource); // Add PDF file content
+        body.add("typeOfDocument", "plan");
+        body.add("mimeType", "application/pdf");
+        body.add("documentProperties", docuData); // Add metadata as JSON
+
+        // Set up headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.add("Authorization", "JWT " + authorizationID);
+
+        // Create the HTTP entity
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        // Use RestTemplate to make the POST request
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+        // Print response details
+        System.out.println("Response status: " + response.getStatusCode());
+        System.out.println("Response body: " + response.getBody());
+
+        return response.getStatusCode().is2xxSuccessful();
+    }
+
+    public String buildJsonFromModelMain(ModelMain modelMain) {
+        String planName = modelMain.getPlanName();
+        String planNumber = modelMain.getPlanNumber();
+
+        // Build JSON as a String
+        String json = "{\n" +
+                "    \"plan\": {\n" +
+                "        \"name\": \"" + planName + "\",\n" +
+                "        \"number\": \"" + planNumber + "\"\n" +
+                "       \"category\": \"" + "MassMutual" + "\"\n" +
+                "    }\n" +
+                "}";
+
+        return json;
+    }
+
+    /*
+     * Get authorization ID for DocuSign POST
+     */
+    private String getAuthorizationID() {
+
+        String authorizationID = "";
+
+        try {
+
+            /*
+             * Set up POST request for authorization key
+             */
+            URL authorizationUrl = null;
+            if (runType.equals("PROD")) {
+                authorizationUrl = new URL("https://backend2-aws.retirementpartner.com:443/security/authenticate/agent");
+            } else if (runType.equals("DEV")) {
+                authorizationUrl = new URL("http://dapps4.gwl.com:8519/security/authenticate/agent");
+            }
+
+            /*
+             * Define JSON object
+             */
+            String authorizationJSON = "{\n";
+            if (runType.equals("PROD")) {
+                authorizationJSON = authorizationJSON + "\"username\":\"K_4J0I5\",\n";
+                authorizationJSON = authorizationJSON + "\"password\":\"Empower@2021\"\n";
+            } else if (runType.equals("DEV")) {
+                authorizationJSON = authorizationJSON + "\"username\":\"K_1IN02\",\n";
+                authorizationJSON = authorizationJSON + "\"password\":\"testing1\"\n";
+            }
+            authorizationJSON = authorizationJSON + "}\n";
+
+            /*
+             * Open connection
+             */
+            HttpURLConnection connection = (HttpURLConnection) authorizationUrl.openConnection();
+
+            /*
+             * Setup connection properties
+             */
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+
+            /*
+             * Write POST request
+             */
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = authorizationJSON.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            /*
+             * Get response status
+             */
+            int status = connection.getResponseCode();
+
+            /*
+             * Should be 204, no content returned But we will get the authorization key
+             * returned in a header record
+             */
+            if (status == HttpURLConnection.HTTP_NO_CONTENT) {
+                authorizationID = connection.getHeaderField("Authorization");
+                System.out.println(authorizationID);
+            }
+            connection.disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return authorizationID;
+    }
+
+
+    public ResponseEntity<byte[]> getPDF(String filename) throws Exception {
+        // Retrieve the file based on the provided filename
+        String directoryPath = "C:\\ECM\\PVR\\All_20231218_1552MST\\";
+        File file = new File(directoryPath, filename); // Assuming the filename is the full path or relative path to the file
+
+        // Check if the file exists
+        if (!file.exists()) {
+//            System.out.println("name is "+filename);
+            System.out.println(" found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        try {
+            // Read the file content into a byte array
+            byte[] fileContent = Files.readAllBytes(file.toPath());
+
+            // Check if the file content is empty
+            if (fileContent == null || fileContent.length == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+
+            // Set the dynamic filename for the response header
+            String dynamicFilename = filename; // You can modify this to extract just the file name if needed
+//            System.out.println("helo");
+            // Return the file content as a response with the proper headers
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dynamicFilename + "\"")
+                    .header(HttpHeaders.CONTENT_TYPE, "application/pdf")
+                    .body(fileContent);
+
+        } catch (IOException e) {
+            // Handle the exception and return an error response
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+}
+
+
+
 
 "C:\Program Files\Java\jdk-21\bin\java.exe" -XX:TieredStopAtLevel=1 -Dspring.output.ansi.enabled=always -Dcom.sun.management.jmxremote -Dspring.jmx.enabled=true -Dspring.liveBeansView.mbeanDomain -Dspring.application.admin.enabled=true "-Dmanagement.endpoints.jmx.exposure.include=*" "-javaagent:C:\Program Files\JetBrains (1)\JetBrains\IntelliJ IDEA 2024.1.1\lib\idea_rt.jar=57504:C:\Program Files\JetBrains (1)\JetBrains\IntelliJ IDEA 2024.1.1\bin" -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath C:\ECM\ECM1\ECM1\target\classes;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter-web\3.3.4\spring-boot-starter-web-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter\3.3.4\spring-boot-starter-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot\3.3.4\spring-boot-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-autoconfigure\3.3.4\spring-boot-autoconfigure-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter-logging\3.3.4\spring-boot-starter-logging-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\ch\qos\logback\logback-classic\1.5.8\logback-classic-1.5.8.jar;C:\Users\service-ascscripting\.m2\repository\ch\qos\logback\logback-core\1.5.8\logback-core-1.5.8.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\logging\log4j\log4j-to-slf4j\2.23.1\log4j-to-slf4j-2.23.1.jar;C:\Users\service-ascscripting\.m2\repository\org\slf4j\jul-to-slf4j\2.0.16\jul-to-slf4j-2.0.16.jar;C:\Users\service-ascscripting\.m2\repository\jakarta\annotation\jakarta.annotation-api\2.1.1\jakarta.annotation-api-2.1.1.jar;C:\Users\service-ascscripting\.m2\repository\org\yaml\snakeyaml\2.2\snakeyaml-2.2.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter-json\3.3.4\spring-boot-starter-json-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.17.2\jackson-datatype-jdk8-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.17.2\jackson-datatype-jsr310-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\module\jackson-module-parameter-names\2.17.2\jackson-module-parameter-names-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter-tomcat\3.3.4\spring-boot-starter-tomcat-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\tomcat\embed\tomcat-embed-core\10.1.30\tomcat-embed-core-10.1.30.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\tomcat\embed\tomcat-embed-el\10.1.30\tomcat-embed-el-10.1.30.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\tomcat\embed\tomcat-embed-websocket\10.1.30\tomcat-embed-websocket-10.1.30.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-web\6.1.13\spring-web-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-beans\6.1.13\spring-beans-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\io\micrometer\micrometer-observation\1.13.4\micrometer-observation-1.13.4.jar;C:\Users\service-ascscripting\.m2\repository\io\micrometer\micrometer-commons\1.13.4\micrometer-commons-1.13.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-webmvc\6.1.13\spring-webmvc-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-aop\6.1.13\spring-aop-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-context\6.1.13\spring-context-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-expression\6.1.13\spring-expression-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\poi\poi-ooxml\5.2.3\poi-ooxml-5.2.3.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\poi\poi\5.2.3\poi-5.2.3.jar;C:\Users\service-ascscripting\.m2\repository\commons-codec\commons-codec\1.16.1\commons-codec-1.16.1.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\commons\commons-math3\3.6.1\commons-math3-3.6.1.jar;C:\Users\service-ascscripting\.m2\repository\com\zaxxer\SparseBitSet\1.2\SparseBitSet-1.2.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\poi\poi-ooxml-lite\5.2.3\poi-ooxml-lite-5.2.3.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\xmlbeans\xmlbeans\5.1.1\xmlbeans-5.1.1.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\commons\commons-compress\1.21\commons-compress-1.21.jar;C:\Users\service-ascscripting\.m2\repository\commons-io\commons-io\2.11.0\commons-io-2.11.0.jar;C:\Users\service-ascscripting\.m2\repository\com\github\virtuald\curvesapi\1.07\curvesapi-1.07.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\logging\log4j\log4j-api\2.23.1\log4j-api-2.23.1.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\commons\commons-collections4\4.4\commons-collections4-4.4.jar;C:\Users\service-ascscripting\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-core\6.1.13\spring-core-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-jcl\6.1.13\spring-jcl-6.1.13.jar com.ecm1.ECM1.Ecm1Application
 
