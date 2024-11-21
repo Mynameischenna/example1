@@ -1,3 +1,96 @@
+
+"C:\Program Files\Java\jdk-21\bin\java.exe" -XX:TieredStopAtLevel=1 -Dspring.output.ansi.enabled=always -Dcom.sun.management.jmxremote -Dspring.jmx.enabled=true -Dspring.liveBeansView.mbeanDomain -Dspring.application.admin.enabled=true "-Dmanagement.endpoints.jmx.exposure.include=*" "-javaagent:C:\Program Files\JetBrains (1)\JetBrains\IntelliJ IDEA 2024.1.1\lib\idea_rt.jar=57504:C:\Program Files\JetBrains (1)\JetBrains\IntelliJ IDEA 2024.1.1\bin" -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath C:\ECM\ECM1\ECM1\target\classes;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter-web\3.3.4\spring-boot-starter-web-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter\3.3.4\spring-boot-starter-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot\3.3.4\spring-boot-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-autoconfigure\3.3.4\spring-boot-autoconfigure-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter-logging\3.3.4\spring-boot-starter-logging-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\ch\qos\logback\logback-classic\1.5.8\logback-classic-1.5.8.jar;C:\Users\service-ascscripting\.m2\repository\ch\qos\logback\logback-core\1.5.8\logback-core-1.5.8.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\logging\log4j\log4j-to-slf4j\2.23.1\log4j-to-slf4j-2.23.1.jar;C:\Users\service-ascscripting\.m2\repository\org\slf4j\jul-to-slf4j\2.0.16\jul-to-slf4j-2.0.16.jar;C:\Users\service-ascscripting\.m2\repository\jakarta\annotation\jakarta.annotation-api\2.1.1\jakarta.annotation-api-2.1.1.jar;C:\Users\service-ascscripting\.m2\repository\org\yaml\snakeyaml\2.2\snakeyaml-2.2.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter-json\3.3.4\spring-boot-starter-json-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.17.2\jackson-datatype-jdk8-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.17.2\jackson-datatype-jsr310-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\com\fasterxml\jackson\module\jackson-module-parameter-names\2.17.2\jackson-module-parameter-names-2.17.2.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\boot\spring-boot-starter-tomcat\3.3.4\spring-boot-starter-tomcat-3.3.4.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\tomcat\embed\tomcat-embed-core\10.1.30\tomcat-embed-core-10.1.30.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\tomcat\embed\tomcat-embed-el\10.1.30\tomcat-embed-el-10.1.30.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\tomcat\embed\tomcat-embed-websocket\10.1.30\tomcat-embed-websocket-10.1.30.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-web\6.1.13\spring-web-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-beans\6.1.13\spring-beans-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\io\micrometer\micrometer-observation\1.13.4\micrometer-observation-1.13.4.jar;C:\Users\service-ascscripting\.m2\repository\io\micrometer\micrometer-commons\1.13.4\micrometer-commons-1.13.4.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-webmvc\6.1.13\spring-webmvc-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-aop\6.1.13\spring-aop-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-context\6.1.13\spring-context-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-expression\6.1.13\spring-expression-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\poi\poi-ooxml\5.2.3\poi-ooxml-5.2.3.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\poi\poi\5.2.3\poi-5.2.3.jar;C:\Users\service-ascscripting\.m2\repository\commons-codec\commons-codec\1.16.1\commons-codec-1.16.1.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\commons\commons-math3\3.6.1\commons-math3-3.6.1.jar;C:\Users\service-ascscripting\.m2\repository\com\zaxxer\SparseBitSet\1.2\SparseBitSet-1.2.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\poi\poi-ooxml-lite\5.2.3\poi-ooxml-lite-5.2.3.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\xmlbeans\xmlbeans\5.1.1\xmlbeans-5.1.1.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\commons\commons-compress\1.21\commons-compress-1.21.jar;C:\Users\service-ascscripting\.m2\repository\commons-io\commons-io\2.11.0\commons-io-2.11.0.jar;C:\Users\service-ascscripting\.m2\repository\com\github\virtuald\curvesapi\1.07\curvesapi-1.07.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\logging\log4j\log4j-api\2.23.1\log4j-api-2.23.1.jar;C:\Users\service-ascscripting\.m2\repository\org\apache\commons\commons-collections4\4.4\commons-collections4-4.4.jar;C:\Users\service-ascscripting\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-core\6.1.13\spring-core-6.1.13.jar;C:\Users\service-ascscripting\.m2\repository\org\springframework\spring-jcl\6.1.13\spring-jcl-6.1.13.jar com.ecm1.ECM1.Ecm1Application
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.4)
+
+2024-11-21T07:54:54.028-07:00  INFO 3204 --- [ECM1] [           main] com.ecm1.ECM1.Ecm1Application            : Starting Ecm1Application using Java 21.0.5 with PID 3204 (C:\ECM\ECM1\ECM1\target\classes started by service-ascscripting in C:\ECM\ECM1\ECM1)
+2024-11-21T07:54:54.034-07:00  INFO 3204 --- [ECM1] [           main] com.ecm1.ECM1.Ecm1Application            : No active profile set, falling back to 1 default profile: "default"
+2024-11-21T07:54:56.218-07:00  INFO 3204 --- [ECM1] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2024-11-21T07:54:56.256-07:00  INFO 3204 --- [ECM1] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-11-21T07:54:56.257-07:00  INFO 3204 --- [ECM1] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.30]
+2024-11-21T07:54:56.389-07:00  INFO 3204 --- [ECM1] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-11-21T07:54:56.390-07:00  INFO 3204 --- [ECM1] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2251 ms
+eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJSUzUxMiJ9.eyJ1c2VyU2Vzc2lvbklkIjoiVEhFX1NFU1NJT05fSUQgQWVrd3BUZXFEQ2drakptc1FsR2V2N1ZkNnRwZWw4MzJYWl9lcTdxV1AtbUZSS0I3aFBKTWhhUmw5VUtxMDFCZFRIVTN4dDdwJTI1MEF5TXh1TjhVdkp1QXI1UTJ0XzA2T2dIbGpFVXJwaHpfUzA0c2ZhNkN5TXNzallmQmxLaGNyWFBJaGhMVXZjN0dPR2tkcTBVNDMlMjUwQTZ5ZTdMU2VnWFpJUXMzakFUb3haRDVmVlZydmJjOUtWYjdMWWVTNWJ0ZHRGeFRGRlU5WjlxV09YcHhHY18tMlhsN3oxcjlPVSUyNTBBbjhzZHRBUTNKNlBjcUVFd2FkUGJqMmdKSEEqKiIsDQogInZhbGlkVGltZSI6IjE3MzIyMDQ0OTg5MTUiLA0KICJleHBpcmVUaW1lIjoiMTczMjIwODA5ODkxNSJ9.o6bxSpVhp8NxpPEN-lCDq7mnWvx2GTsb1ZsQSMAx8HGpR_JIFR29ksABJiBArrjFJcoXL7DFoHg-0a163kK374DARZEyglzbF0ZptZBwGlAm2UtFLzE4CyMy4ijk8aZnnhzAzncatxf56Dj0hY0hkMVxSHzLP-J3YW8WYtvcTUgHsdGKod4-y-L81UrRF0YDivJw2-V33QXqnJ0CpyOuo9gmrSHkT2s0PTnQbJG4ApbrmjJjadxJej4K3FRTWYlyRtjwjVy6EAezD9XKYoiO4KESQ5GhHW2rP6PoC23-ly3hc_IF-y4jKGpRrvIwvpeSDaFF7sBwvfeIXDW6FJ1u5g
+Regex: 591121-01_PRU_1_\d_\d{8}_\d{4}MST\.pdf
+Found file name: 591121-01_PRU_1_6_20231218_1553MST.pdf
+org.springframework.web.client.HttpServerErrorException$InternalServerError: 500 : "{"error":{"code":"E-000","message":"INVALID_REQUEST:JsonProcessingException documentProperties likely a field is unknown:Unexpected character ('\"' (code 34)): was expecting comma to separate Object entries\n at [Source: (String)\"{\n    \"plan\": {\n        \"name\": \"Bob Johnson Group Retirement Savings Plan\",\n        \"number\": \"591121-01\"\n       \"category\": \"MassMutual\"\n    }\n}\"; line: 5, column: 9] (through reference chain: com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties[\"plan\"])","details":[{"field":null,"issue":"INVALID_REQUEST:JsonProcessingException documentProperties likely a field is unknown:Unexpected character ('\"' (code 34)): was expecting comma to separate Object entries\n at [Source: (String)\"{\n    \"plan\": {\n        \"name\": \"Bob Johnson Group Retirement Savings Plan\",\n        \"number\": \"591121-01\"\n       \"category\": \"MassMutual\"\n    }\n}\"; line: 5, column: 9] (through reference chain: com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties[\"plan\"])","location":null,"hint":null}],"link":null,"correlationId":"673f49c30ba0f3495c71683d46178afe"}}"
+	at org.springframework.web.client.HttpServerErrorException.create(HttpServerErrorException.java:102)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:186)
+	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:137)
+	at org.springframework.web.client.ResponseErrorHandler.handleError(ResponseErrorHandler.java:63)
+	at org.springframework.web.client.RestTemplate.handleResponse(RestTemplate.java:942)
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:891)
+	at org.springframework.web.client.RestTemplate.execute(RestTemplate.java:790)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:672)
+	at com.ecm1.ECM1.ECMservice.sendPostScanSheets(ECMservice.java:160)
+	at com.ecm1.ECM1.ECMservice.postApi(ECMservice.java:105)
+	at com.ecm1.ECM1.ECMservice.processFile(ECMservice.java:32)
+	at com.ecm1.ECM1.ECMcontroller.handleFileFromPath(ECMcontroller.java:19)
+	at com.ecm1.ECM1.Ecm1Application.run(Ecm1Application.java:25)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMethod.invoke(InitDestroyAnnotationBeanPostProcessor.java:457)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMetadata.invokeInitMethods(InitDestroyAnnotationBeanPostProcessor.java:401)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:219)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:422)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1798)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:600)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:975)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:971)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:625)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:456)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:335)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1363)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1352)
+	at com.ecm1.ECM1.Ecm1Application.main(Ecm1Application.java:17)
+java.lang.Exception: Error processing file: 500 : "{"error":{"code":"E-000","message":"INVALID_REQUEST:JsonProcessingException documentProperties likely a field is unknown:Unexpected character ('\"' (code 34)): was expecting comma to separate Object entries\n at [Source: (String)\"{\n    \"plan\": {\n        \"name\": \"Bob Johnson Group Retirement Savings Plan\",\n        \"number\": \"591121-01\"\n       \"category\": \"MassMutual\"\n    }\n}\"; line: 5, column: 9] (through reference chain: com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties[\"plan\"])","details":[{"field":null,"issue":"INVALID_REQUEST:JsonProcessingException documentProperties likely a field is unknown:Unexpected character ('\"' (code 34)): was expecting comma to separate Object entries\n at [Source: (String)\"{\n    \"plan\": {\n        \"name\": \"Bob Johnson Group Retirement Savings Plan\",\n        \"number\": \"591121-01\"\n       \"category\": \"MassMutual\"\n    }\n}\"; line: 5, column: 9] (through reference chain: com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties[\"plan\"])","location":null,"hint":null}],"link":null,"correlationId":"673f49c30ba0f3495c71683d46178afe"}}"
+	at com.ecm1.ECM1.ECMservice.processFile(ECMservice.java:38)
+	at com.ecm1.ECM1.ECMcontroller.handleFileFromPath(ECMcontroller.java:19)
+	at com.ecm1.ECM1.Ecm1Application.run(Ecm1Application.java:25)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMethod.invoke(InitDestroyAnnotationBeanPostProcessor.java:457)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMetadata.invokeInitMethods(InitDestroyAnnotationBeanPostProcessor.java:401)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:219)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:422)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1798)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:600)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:337)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:975)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:971)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:625)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:456)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:335)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1363)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1352)
+	at com.ecm1.ECM1.Ecm1Application.main(Ecm1Application.java:17)
+Failed to process file: Error processing file: 500 : "{"error":{"code":"E-000","message":"INVALID_REQUEST:JsonProcessingException documentProperties likely a field is unknown:Unexpected character ('\"' (code 34)): was expecting comma to separate Object entries\n at [Source: (String)\"{\n    \"plan\": {\n        \"name\": \"Bob Johnson Group Retirement Savings Plan\",\n        \"number\": \"591121-01\"\n       \"category\": \"MassMutual\"\n    }\n}\"; line: 5, column: 9] (through reference chain: com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties[\"plan\"])","details":[{"field":null,"issue":"INVALID_REQUEST:JsonProcessingException documentProperties likely a field is unknown:Unexpected character ('\"' (code 34)): was expecting comma to separate Object entries\n at [Source: (String)\"{\n    \"plan\": {\n        \"name\": \"Bob Johnson Group Retirement Savings Plan\",\n        \"number\": \"591121-01\"\n       \"category\": \"MassMutual\"\n    }\n}\"; line: 5, column: 9] (through reference chain: com.gwf.specprodecm.api.ecmdocumentsapi.model.DocumentProperties[\"plan\"])","location":null,"hint":null}],"link":null,"correlationId":"673f49c30ba0f3495c71683d46178afe"}}"
+2024-11-21T07:54:59.979-07:00  INFO 3204 --- [ECM1] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2024-11-21T07:54:59.991-07:00  INFO 3204 --- [ECM1] [           main] com.ecm1.ECM1.Ecm1Application            : Started Ecm1Application in 6.684 seconds (process running for 8.862)
+ECM Application is running!
+
+
+
 public boolean sendPostScanSheets(ModelMain currCell) throws Exception {
     status = true;
 
