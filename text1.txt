@@ -1,3 +1,47 @@
+
+    public boolean sendPostScanSheets(ModelMain currCell) throws Exception {
+        String authorizationID = getAuthorizationID();
+        String url = getUrlForEnvironment();
+
+        File file = getFile(currCell.getPlanNumber());
+
+        if (file == null) {
+            System.out.println("No file found for plan number " + currCell.getPlanNumber());
+            return false;
+        }
+
+        byte[] fileContent = Files.readAllBytes(file.toPath());
+
+        // Prepare headers and body for the request
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.set("Authorization", "Bearer " + authorizationID);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("typeOfDocument", "plan"); // Adjust as necessary
+        body.add("mimeType", "application/pdf"); // Example mime type
+        body.add("startWorkFlow", "false"); // Adjust as necessary
+        body.add("documentProperties", getDocumentPropertiesJson());
+        body.add("file", new FileSystemResource(file));
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        // Send POST request
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            System.out.println("Document uploaded successfully");
+            return true;
+        } else {
+            System.out.println("Failed to upload document");
+            return false;
+        }
+    }
+
+
+
+
 public String buildJsonFromModelMain(ModelMain modelMain) {
     String planName = modelMain.getPlanName();
     String planNumber = modelMain.getPlanNumber();
