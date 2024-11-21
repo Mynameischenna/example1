@@ -1,3 +1,168 @@
+Add a Document
+
+REST method POST – adds a document to the ECM
+
+headers Content-Type = multipart/form-data
+
+Body = form-data
+
+typeOfDocument = <use TypeOfDocument Above>
+
+mimeType = real mimetype of the image, example application/pdf
+
+startWorkFlow = true or false.. defaults to false... Only groups that corrordinate with ECM should use this field
+
+documentProperties = JSON string using documentProperties 
+
+example
+
+{
+    "plan": {
+        "number": "932777-01",
+        "name": "ABC Corporation, Inc",
+        "source": "401K"
+     },
+    "document": 
+     {
+        "documentTypeCode": "testdmtycode",
+        "category": "testCategory"
+     }
+}
+
+file = <byte array>
+
+Response example
+
+{
+    "document": {
+        "id": "76058815",
+        "token": "6d6b1bc0fd4efd79561d30130bfdf3c05760d3ae8dadc741ee6c01b20cec96b1c3a5fc6ed6c5a40a310b580a54b8a523"
+    }
+}
+
+
+
+Get a Document List – query the ECM for a list of documents
+
+/documents-list
+REST method POST - queries the ECM for a document list
+
+headers  Content-Type = application/json
+
+URI Parameters
+
+typeOfDocument  String  see typeOfDocuments list above. But with spring/boot... if you want multiple use the key/value multiple times 
+
+                                example typeOfDocument=plan&typeOfDocument=participant   
+
+maxResults  100  defaults to 100
+
+returnLatestDocument   true or false defaults to false
+
+includeMimeType  true or false, defaults to false.. its faster to return the data without each docs mimetype.  Only enable if needed
+
+dateFilter – if you are searching by dates.. what is the date field to use for the search
+
+startingDate – if searching by date what date to start with using Date format 2023-01-01
+
+endingDate – if searching by date what date to end with using Date format 2023-03-01
+
+queryTimeout - integer defaults to 15 seconds
+
+tokenTimeToLive – how long should the encrypted token be valid for. defaults to 15 minutes
+
+      IF you want to search for document data with only the onbase document handle (id) use this in the request body
+
+{
+
+"document": 
+    {
+      "id": "123456789"
+    }
+
+}
+
+          Normal search by data...
+
+Request Body  – this is the json search criteria you are searching for.  Some fields can have comma separated for multiple value searches .. comma seperated SSN, planNumber and EventId
+
+{
+  "plan": {
+    "number": "12345-01",
+    "name": "ABC Corporation, Inc",
+    "source": "401K",
+    "accountGrouping": "123456",
+    "groupClientBasis": "654321",
+    "groupClientValue": "123456"
+  },
+  "participant": {
+    "name": "John P Smith",
+    "individualId": "123456789",
+    "socialSecurity": {
+      "number": "123456789",
+      "numberExtension": "3"
+    }
+  },
+  "document": 
+    {
+      "batchName": "batch12345"
+    }
+}
+
+Response for an onbase document
+
+{
+    "documents": [
+        {
+            "id": "76068728",
+            "token": "922ee5d61fea2efcb9514977922b742aa61ac6089482e01bcd4d4779097187e559bf06323e27f931395ba30245f3d90b",
+            "documentProperties": {
+                "document": {
+                    "batchName": "TESTBATCH",
+                    "createdDate": "2023-02-15T13:35:48-07:00",
+                    "documentTypeCode": "TESTJLSR",
+                    "documentTitle": "RK - Plan - 2/15/2023 - 932777-01 -  -  -  -  -"
+                },
+                "plan": {
+                    "planName": "ABC CORPORATION, INC",
+                    "source": "401K",
+                    "planNumber": "932777-01"
+                }
+            }
+        }
+    ]
+}
+
+response for a filenet document
+
+{{
+    "documents": [
+        {
+            "id": "{3A26CCAF-DFF2-4A6D-8F41-6A8E06884E4E}",
+            "token": "33919535781264c010fb6e7345802347a990a9c6438afe82daf02645e10c4487af49adef82d3653b0066dc9041594066c156fd60b6348b9c4fc233d98a5c5248deb2adb25e5eb1cf6a2a52f1fa91aee0267d5bfeec7664c4bd41184be9ac1fee",
+            "documentProperties": {
+                "document": {
+                    "createdDate": "2015-08-31T14:36:12-06:00",
+                    "emailBody": "*** Email Body is truncated to 1200 Characters ****     \nSaving transfer checklist to ECM for Plan #",
+                    "emailTo": "LCProcessForms-PROD@gwl.com",
+                    "emailFrom": "jeff.tenhaken@retirementpartner.com",
+                    "mimeType": "application/pdf",
+                    "documentTitle": "PlanOnBoarding_READONLY_T2_915800-20.pdf",
+                    "emailSubject": "Saving Transfer Checklist for #915800-20",
+                    "application_transition_guide": "Historical Client Submission"
+                },
+                "plan": {
+                    "planName": "JTH Dev Test Plan 8-31-15",
+                    "planNumber": "932777-01"
+                }
+            }
+        }
+    ]
+}
+
+
+
+
 
 org.springframework.web.client.HttpServerErrorException$InternalServerError: 500 : "{"error":{"code":"E-000","message":"ADD_DOCUMENT_ERROR: Error adding document to OnBase:[class ErrorResponseErrorDetails {\n    field: addDocument\n    issue: RuntimeException: createDocumentWithContent createDocumentWithContentWithString required fields are not present or null/empty:[RK - DBINST]:\n    location: body\n    hint: Please check the error details\n}]","details":[{"field":null,"issue":"ADD_DOCUMENT_ERROR: Error adding document to OnBase:[class ErrorResponseErrorDetails {\n    field: addDocument\n    issue: RuntimeException: createDocumentWithContent createDocumentWithContentWithString required fields are not present or null/empty:[RK - DBINST]:\n    location: body\n    hint: Please check the error details\n}]","location":null,"hint":null}],"link":null,"correlationId":"673f4f843f73f14b2eb26ec871925f24"}}"
 	at org.springframework.web.client.HttpServerErrorException.create(HttpServerErrorException.java:102)
