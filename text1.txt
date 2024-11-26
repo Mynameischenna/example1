@@ -1,3 +1,48 @@
+Add a Document
+
+REST method POST – adds a document to the ECM
+
+headers Content-Type = multipart/form-data
+
+Body = form-data
+
+typeOfDocument = <use TypeOfDocument Above>
+
+mimeType = real mimetype of the image, example application/pdf
+
+startWorkFlow = true or false.. defaults to false... Only groups that corrordinate with ECM should use this field
+
+documentProperties = JSON string using documentProperties 
+
+example
+
+{
+    "plan": {
+        "number": "932777-01",
+        "name": "ABC Corporation, Inc",
+        "source": "401K"
+     },
+    "document": 
+     {
+        "documentTypeCode": "testdmtycode",
+        "category": "testCategory"
+     }
+}
+
+file = <byte array>
+
+Response example
+
+{
+    "document": {
+        "id": "76058815",
+        "token": "6d6b1bc0fd4efd79561d30130bfdf3c05760d3ae8dadc741ee6c01b20cec96b1c3a5fc6ed6c5a40a310b580a54b8a523"
+    }
+}
+
+
+
+
 
 	@Override
 	public ResponseEntity<AddDocumentResponseDTO> addDocument(String typeOfDocument, String documentStringProperties,
