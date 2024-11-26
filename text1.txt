@@ -1,3 +1,80 @@
+
+	@Override
+	public ResponseEntity<AddDocumentResponseDTO> addDocument(String typeOfDocument, String documentStringProperties,
+															  String mimeType, Boolean startWorkFlow, MultipartFile file) {
+		DocumentProperties documentProperties = null;
+		if (logger.isDebugEnabled())
+			logger.debug("Enering ECMOperationsController-addDocument");
+		
+		if (startWorkFlow == null) {
+			startWorkFlow = Boolean.FALSE;
+		}
+		
+		//verify inputs
+		List<ErrorResponseErrorDetails> errorList = ECMUtilities.validateAddDocumentAddData(metaDataTranslationDao.getDocumentTypeObject(), file, documentStringProperties, typeOfDocument, mimeType);
+		if (logger.isDebugEnabled())
+			logger.debug("ECMOperationsController-addDocument after validate");
+		
+		if (!errorList.isEmpty()) {
+			throw new ECMDocumentsException(ECMConstants.INVALID_REQUEST_MSG + ":" + errorList, null);
+		}
+		
+		try {
+			documentProperties = objectMapper.readValue(documentStringProperties, DocumentProperties.class);
+		}catch (JsonProcessingException jpe) {
+			throw new ECMDocumentsException(ECMConstants.INVALID_REQUEST_MSG + ":JsonProcessingException documentProperties likely a field is unknown:" + jpe.getMessage(), jpe);
+		}catch(Exception e) {
+			throw new ECMDocumentsException(ECMConstants.INVALID_REQUEST_MSG + ":Exception documentProperties:", e);
+		}
+		
+		
+		documentProperties = ECMUtilities.validateBadCharProperties(documentProperties);
+		
+		
+		if (logger.isDebugEnabled())
+			logger.debug("ECMOperationsController-addDocument after isEmpty");
+		AddDocumentResponseVO addDocumentResponseVO = ecmServiceInterface.addDocument(file, documentProperties, typeOfDocument, mimeType, startWorkFlow);
+		
+		AddDocumentResponseDTO addDocumentResponseDTO = new AddDocumentResponseDTO();
+		AddDocumentResponseDTODocuments responseDTODocument = new AddDocumentResponseDTODocuments();
+		responseDTODocument.setId(addDocumentResponseVO.getDocumentId());
+		responseDTODocument.setToken(addDocumentResponseVO.getDocumentToken());
+		addDocumentResponseDTO.setDocuments(responseDTODocument);
+		if (logger.isDebugEnabled())
+			logger.debug("Exiting ECMOperationsController-addDocument");
+		return ne
+
+
+public AddDocumentResponseVO addDocument(MultipartFile file, DocumentProperties documentProperties, String typeOfDocument, String mimeType, Boolean startWorkFlow) {
+		if (logger.isDebugEnabled())
+			logger.debug("Entering ECMService-addDocument");
+		AddDocumentResponseVO responseVO;
+
+		byte[] inputFile = null;
+		try {
+			inputFile = file.getBytes();
+
+		} catch (Exception e) {
+			logger.error("Error in getting bytes from input file - {}", e.getMessage());
+			List<ErrorResponseErrorDetails> details = new ArrayList<>();
+			details.add(ECMUtilities.setErrorDetails(ECMConstants.FILE_INPUT_PARAM, e.getMessage(),
+					"Please provide valid and correct file", LocationEnum.BODY));
+			throw new ECMDocumentsException("FILE_ERROR Input file is not valid or corrupt:" + details);
+		}
+
+		responseVO = onbaseService.addDocument(typeOfDocument, mimeType, inputFile, documentProperties, startWorkFlow);
+
+		if (logger.isDebugEnabled())
+			logger.debug("Exiting CommonECMService-addDocument");
+		return (responseVO);
+	}
+
+
+
+
+
+
+
 org.springframework.web.client.HttpServerErrorException$InternalServerError: 500 : "{"error":{"code":"E-000","message":"ADD_DOCUMENT_ERROR: Error adding document to OnBase:[class ErrorResponseErrorDetails {\n    field: addDocument\n    issue: RuntimeException: createDocumentWithContent createDocumentWithContentWithString required fields are not present or null/empty:[RK - DBINST]:\n    location: body\n    hint: Please check the error details\n}]","details":[{"field":null,"issue":"ADD_DOCUMENT_ERROR: Error adding document to OnBase:[class ErrorResponseErrorDetails {\n    field: addDocument\n    issue: RuntimeException: createDocumentWithContent createDocumentWithContentWithString required fields are not present or null/empty:[RK - DBINST]:\n    location: body\n    hint: Please check the error details\n}]","location":null,"hint":null}],"link":null,"correlationId":"6745e69645f2a17821cc02364377dd1b"}}"
 	at org.springframework.web.client.HttpServerErrorException.create(HttpServerErrorException.java:102)
 	at org.springframework.web.client.DefaultResponseErrorHandler.handleError(DefaultResponseErrorHandler.java:186)
