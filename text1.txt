@@ -1,3 +1,33 @@
+public String buildJsonFromModelMain(ModelMain modelMain) {
+    try {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Plan details
+        Map<String, String> plan = new HashMap<>();
+        plan.put("number", modelMain.getPlanNumber());
+        plan.put("name", modelMain.getPlanName());
+        plan.put("source", "401K"); // Example static value, replace as needed
+
+        // Document details
+        Map<String, String> document = new HashMap<>();
+        document.put("documentTypeCode", "testdmtycode"); // Example value
+        document.put("category", "testCategory"); // Example value
+
+        // Full JSON
+        Map<String, Object> jsonMap = new HashMap<>();
+        jsonMap.put("plan", plan);
+        jsonMap.put("document", document);
+
+        return objectMapper.writeValueAsString(jsonMap);
+    } catch (JsonProcessingException e) {
+        throw new RuntimeException("Error building JSON", e);
+    }
+}
+
+
+
+
+
 Add a Document
 
 REST method POST – adds a document to the ECM
