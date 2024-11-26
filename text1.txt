@@ -1,3 +1,7 @@
+ @PostMapping("/process-file")
+    public String handleFileFromPath(@RequestParam("filePath") String filePath) {
+
+
 public String buildJsonFromModelMain(ModelMain modelMain) {
     try {
         ObjectMapper objectMapper = new ObjectMapper();
