@@ -1,4 +1,41 @@
- @PostMapping("/process-file")
+try {
+    Transport.send(message);
+    System.out.println("Email sent successfully.");
+} catch (SendFailedException sfe) {
+    // Handle invalid recipient(s)
+    Address[] invalidAddresses = sfe.getInvalidAddresses();
+    if (invalidAddresses != null) {
+        System.out.println("Invalid addresses:");
+        for (Address address : invalidAddresses) {
+            System.out.println(address);
+        }
+    }
+
+    // Handle valid but failed recipients
+    Address[] validUnsentAddresses = sfe.getValidUnsentAddresses();
+    if (validUnsentAddresses != null) {
+        System.out.println("Valid addresses but unsent:");
+        for (Address address : validUnsentAddresses) {
+            System.out.println(address);
+        }
+    }
+
+    // Handle successfully sent recipients
+    Address[] validSentAddresses = sfe.getValidSentAddresses();
+    if (validSentAddresses != null) {
+        System.out.println("Successfully sent to:");
+        for (Address address : validSentAddresses) {
+            System.out.println(address);
+        }
+    }
+} catch (MessagingException me) {
+    System.out.println("Error while sending email: " + me.getMessage());
+    me.printStackTrace();
+}
+
+
+
+@PostMapping("/process-file")
     public String handleFileFromPath(@RequestParam("filePath") String filePath) {
 
 
