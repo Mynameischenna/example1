@@ -1,3 +1,114 @@
+
+package com.empower.email;
+
+import javax.mail.*;
+import javax.mail.internet.*;
+import java.util.Properties;
+
+public class EmailHandler {
+
+    public void sendEmail() {
+        String senderEmail = "chenna.kesavareddy@empower.com";
+        String recipientEmail = "ch--ennakeava13579gmail.com"; // Intentional typo for testing bounces
+        String bounceHandlerEmail = "chenna.kesavareddy@empower.com"; // Email to handle bounces
+        String smtpHost = "smtp.east.ssp.aws.gwl.com";
+
+        Properties props = new Properties();
+        props.put("mail.smtp.host", smtpHost);
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.port", "25");
+
+        Session session = Session.getDefaultInstance(props, new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication("chknsv", "Pandu@12"); // Credentials for SMTP
+            }
+        });
+
+        try {
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(senderEmail));
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipientEmail));
+            message.setSubject("Test Email with Bounce Handling");
+            message.setText("This is a test email to check bounce handling.");
+            message.setReplyTo(new Address[]{new InternetAddress(bounceHandlerEmail)}); // Bounce reply-to address
+
+            Transport.send(message);
+            System.out.println("Email sent successfully!");
+        } catch (MessagingException e) {
+            System.err.println("Error sending email: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Check for bounce emails after sending
+        checkBounceEmails(bounceHandlerEmail, "Pandu@12"); // Pass bounce email credentials
+    }
+
+    public void checkBounceEmails(String bounceMail, String password) {
+        String imapHost = "imap.empower.com"; // Update with your IMAP host
+        int imapPort = 993;
+
+        Properties props = new Properties();
+        props.put("mail.store.protocol", "imaps");
+        props.put("mail.imap.host", imapHost);
+        props.put("mail.imap.port", String.valueOf(imapPort));
+        props.put("mail.imap.ssl.enable", "true");
+        props.put("mail.debug", "true"); // Enable debug logs
+
+        try {
+            // Connect to IMAP server
+            Session session = Session.getInstance(props);
+            Store store = session.getStore("imaps");
+            store.connect(imapHost, bounceMail, password);
+
+            // Open inbox
+            Folder inbox = store.getFolder("INBOX");
+            inbox.open(Folder.READ_ONLY);
+
+            System.out.println("Connected to the inbox. Checking for bounce emails...");
+            Message[] messages = inbox.getMessages();
+
+            for (Message message : messages) {
+                if (message.getSubject().contains("Undelivered Mail") || message.getSubject().contains("Failure")) {
+                    System.out.println("\nBounce Email Detected:");
+                    System.out.println("From: " + message.getFrom()[0]);
+                    System.out.println("Subject: " + message.getSubject());
+
+                    // Handle message content
+                    if (message.isMimeType("text/plain")) {
+                        System.out.println("Content: " + message.getContent());
+                    } else if (message.isMimeType("multipart/*")) {
+                        Multipart multipart = (Multipart) message.getContent();
+                        for (int i = 0; i < multipart.getCount(); i++) {
+                            BodyPart bodyPart = multipart.getBodyPart(i);
+                            System.out.println("Part Content: " + bodyPart.getContent());
+                        }
+                    }
+                }
+            }
+
+            inbox.close(false);
+            store.close();
+        } catch (Exception e) {
+            System.err.println("Error checking bounce emails: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        EmailHandler handler = new EmailHandler();
+        handler.sendEmail();
+    }
+}
+
+
+
+
+
+
+
+
+
+
 package com.empower.email;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
