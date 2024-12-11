@@ -1,3 +1,55 @@
+
+import javax.mail.*;
+import javax.mail.internet.MimeMessage;
+import java.util.Properties;
+
+public class BounceHandler {
+    public static void checkBounceEmails() {
+        String host = "imap.gmail.com"; // Use "pop.gmail.com" for POP3
+        String username = "bounce-handler@example.com";
+        String password = "your-password";
+
+        Properties properties = new Properties();
+        properties.put("mail.store.protocol", "imaps"); // Use "pop3" for POP3
+        properties.put("mail.imap.host", host);
+        properties.put("mail.imap.port", "993");
+
+        try {
+            // Connect to the email server
+            Session session = Session.getInstance(properties);
+            Store store = session.getStore("imaps");
+            store.connect(host, username, password);
+
+            // Open the inbox folder
+            Folder inbox = store.getFolder("INBOX");
+            inbox.open(Folder.READ_ONLY);
+
+            // Fetch all messages
+            Message[] messages = inbox.getMessages();
+            for (Message message : messages) {
+                if (message.getSubject().contains("Undelivered Mail") || message.getSubject().contains("Failure")) {
+                    System.out.println("Bounce Email Detected:");
+                    System.out.println("From: " + message.getFrom()[0]);
+                    System.out.println("Subject: " + message.getSubject());
+                    System.out.println("Content: " + message.getContent().toString());
+                }
+            }
+
+            inbox.close(false);
+            store.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        checkBounceEmails();
+    }
+}
+
+
+
+
 try {
     Transport.send(message);
     System.out.println("Email sent successfully.");
