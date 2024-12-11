@@ -1,3 +1,61 @@
+import javax.mail.*;
+import javax.mail.internet.*;
+import java.util.Properties;
+
+public class SimpleEmail {
+
+    public static void sendEmail(String recipient, String subject, String body) {
+        // Sender's email ID and password
+        String senderEmail = "your-email@gmail.com"; // Your email address
+        String senderPassword = "your-email-password"; // Your email password or app password
+
+        // SMTP server configuration
+        String smtpHost = "smtp.gmail.com";  // For Gmail SMTP
+        int smtpPort = 587; // For Gmail's TLS
+
+        // Set the properties for the session
+        Properties properties = new Properties();
+        properties.put("mail.smtp.host", smtpHost);
+        properties.put("mail.smtp.port", smtpPort);
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");  // Enables STARTTLS for encryption
+
+        // Get the Session object
+        Session session = Session.getInstance(properties, new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(senderEmail, senderPassword);
+            }
+        });
+
+        try {
+            // Create the email message
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(senderEmail));
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
+            message.setSubject(subject);
+            message.setText(body);
+
+            // Send the email
+            Transport.send(message);
+            System.out.println("Email sent successfully.");
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            System.out.println("Error while sending email.");
+        }
+    }
+
+    public static void main(String[] args) {
+        String recipient = "recipient-email@example.com"; // Recipient's email
+        String subject = "Test Email from Java";
+        String body = "Hello, this is a test email sent from Java using SMTP.";
+        sendEmail(recipient, subject, body);
+    }
+}
+
+
+
+
+
 EBUG: JavaMail version 1.4.7
 DEBUG: successfully loaded resource: /META-INF/javamail.default.providers
 DEBUG: Tables of loaded providers
