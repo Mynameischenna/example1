@@ -1,3 +1,122 @@
+package com.empower.email;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.mail.*;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+import java.util.Properties;
+@RestController
+public class Helper {
+
+    public void sendEmail() {
+
+        String bounceMail = "chenna.kesavareddy@empower.com";
+        Properties props = System.getProperties();
+
+        props.put("mail.smtp.host", "smtp.east.ssp.aws.gwl.com");
+        props.put("mail.smtp.auth", "true");
+//        props.put("mail.debug", "true");
+        props.put("mail.smtp.port", "25");
+
+        Session session = Session.getDefaultInstance(props,
+                new javax.mail.Authenticator() {
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication("chknsv", "Pandu@12");
+                    }
+                });
+        MimeMessage message = new MimeMessage(session);
+        String context = "This email is being sent to you after a successful transmission of\n" +
+                "your DocuSign document(s).\n";
+        try {
+            message.setFrom(new InternetAddress("chenna.kesavareddy@empower.com"));
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress("ch--ennakeava13579gmail.com"));
+            message.setSubject("Successful transmission - Compliance DocuSign");
+            message.setText(context);
+            message.setReplyTo(new Address[]{new InternetAddress(bounceMail)});
+            Transport.send(message);
+            checkBounceEmails(bounceMail);
+            System.out.println("successfully send the email");
+        } catch (SendFailedException sfe) {
+            // Handle invalid recipient(s)
+            Address[] invalidAddresses = sfe.getInvalidAddresses();
+            if (invalidAddresses != null) {
+                System.out.println("Invalid addresses:");
+                for (Address address : invalidAddresses) {
+                    System.out.println(address);
+                }
+            }
+
+            // Handle valid but failed recipients
+            Address[] validUnsentAddresses = sfe.getValidUnsentAddresses();
+            if (validUnsentAddresses != null) {
+                System.out.println("Valid addresses but unsent:");
+                for (Address address : validUnsentAddresses) {
+                    System.out.println(address);
+                }
+            }
+
+            // Handle successfully sent recipients
+            Address[] validSentAddresses = sfe.getValidSentAddresses();
+            if (validSentAddresses != null) {
+                System.out.println("Successfully sent to:");
+                for (Address address : validSentAddresses) {
+                    System.out.println(address);
+                }
+            }
+        } catch (MessagingException me) {
+            System.out.println("Error while sending email: " + me.getMessage());
+            me.printStackTrace();
+        }
+    }
+
+            public  void checkBounceEmails(String bounceMail) {
+                String host = "imap.gmail.com"; // Use "pop.gmail.com" for POP3
+                String username = bounceMail;
+                String password = "Pandu@12";
+
+                Properties properties = new Properties();
+                properties.put("mail.store.protocol", "imaps"); // Use "pop3" for POP3
+                properties.put("mail.imap.host", host);
+                properties.put("mail.imap.port", "993");
+
+                try {
+                    // Connect to the email server
+                    Session session = Session.getInstance(properties);
+                    Store store = session.getStore("imaps");
+                    store.connect(host, username, password);
+
+                    // Open the inbox folder
+                    Folder inbox = store.getFolder("INBOX");
+                    inbox.open(Folder.READ_ONLY);
+
+                    // Fetch all messages
+                    Message[] messages = inbox.getMessages();
+                    for (Message message : messages) {
+                        if (message.getSubject().contains("Undelivered Mail") || message.getSubject().contains("Failure")) {
+                            System.out.println("Bounce Email Detected:");
+                            System.out.println("From: " + message.getFrom()[0]);
+                            System.out.println("Subject: " + message.getSubject());
+                            System.out.println("Content: " + message.getContent().toString());
+                        }
+                    }
+
+                    inbox.close(false);
+                    store.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+
+
+
+
+
+
 
 import javax.mail.*;
 import javax.mail.internet.MimeMessage;
