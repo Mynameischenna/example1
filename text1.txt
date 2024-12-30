@@ -1,3 +1,13 @@
+akarta.mail.NoSuchProviderException: imap
+	at jakarta.mail.Session.getService(Session.java:842)
+	at jakarta.mail.Session.getStore(Session.java:626)
+	at jakarta.mail.Session.getStore(Session.java:589)
+	at jakarta.mail.Session.getStore(Session.java:568)
+	at com.empower.email.BounceBackMonitor.monitorBounceBacks(BounceBackMonitor.java:39)
+	at com.empower.email.EmailApplication.lambda$main$0(EmailApplication.java:24)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+
 
 fetch('http://localhost:8080/mail', {
   method: 'POST',  // HTTP method
