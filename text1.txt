@@ -1,3 +1,26 @@
+
+fetch('http://localhost:8080/mail', {
+  method: 'POST',  // HTTP method
+  headers: {
+    'Content-Type': 'application/json',  // Tell the server the data is in JSON format
+  },
+  body: JSON.stringify({
+    to: 'recipient@example.com',  // The recipient's email address
+    subject: 'Test Email',  // The subject of the email
+    body: 'This is the body of the email.'  // The body content of the email
+  })
+})
+.then(response => response.json())  // Parse the response to JSON
+.then(data => {
+  console.log('Email sent successfully:', data);  // Log success response
+})
+.catch(error => {
+  console.error('Error sending email:', error);  // Log any error that occurs
+});
+
+
+
+
 https://teams.microsoft.com/l/meetup-join/19%3ameeting_NTY3YzVjOTYtOTFmMS00Mjc5LWJmNjgtMjk4NmI5ZjUyYWFi%40thread.v2/0?context=%7b%22Tid%22%3a%22d344fc8a-8286-4945-9a21-49aed506d485%22%2c%22Oid%22%3a%22aeb1f80b-21fd-462f-86c6-40255d6bd1b9%22%7d
 
 
