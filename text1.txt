@@ -1,3 +1,92 @@
+package com.ecm1.ECM1;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import jakarta.annotation.PostConstruct;
+
+import javax.swing.*;
+import java.io.File;
+
+@SpringBootApplication
+public class Ecm1Application {
+
+	@Autowired
+	private ECMcontroller ecmController;
+	private static File PARENT_PATH = null;
+	private static File EXCEL_PATH = null;
+	private static File ALL_FOLDER_PATH = null;
+
+	public static void main(String[] args) {
+		SpringApplication.run(Ecm1Application.class, args);
+		System.out.println("ECM Application is running!");
+	}
+
+	@PostConstruct
+	public void run() {
+
+		PARENT_PATH = selectDirectory("Select parent directory");
+		System.out.println(PARENT_PATH);
+//		String filePath = "C:\\ECM\\PVR\\REPORT_2362_01DEC2023.xlsx";
+//		String result = ecmController.handleFileFromPath(filePath);
+//		System.out.println(result);
+	}
+
+	// Show a directory chooser dialog
+	private static File selectDirectory(String dialogTitle) {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle(dialogTitle);
+		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+		int result = fileChooser.showOpenDialog(null);
+		if (result == JFileChooser.APPROVE_OPTION) {
+			return fileChooser.getSelectedFile();
+		}
+		return null;
+	}
+}
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-01-08T04:21:14.255-07:00 ERROR 12104 --- [ECM1] [           main] o.s.boot.SpringApplication               : Application run failed
+
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'ecm1Application': Invocation of init method failed
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:222) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:422) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1798) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:600) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:522) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:337) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:335) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:200) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:975) ~[spring-beans-6.1.13.jar:6.1.13]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:971) ~[spring-context-6.1.13.jar:6.1.13]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:625) ~[spring-context-6.1.13.jar:6.1.13]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146) ~[spring-boot-3.3.4.jar:3.3.4]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754) ~[spring-boot-3.3.4.jar:3.3.4]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:456) ~[spring-boot-3.3.4.jar:3.3.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:335) ~[spring-boot-3.3.4.jar:3.3.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1363) ~[spring-boot-3.3.4.jar:3.3.4]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1352) ~[spring-boot-3.3.4.jar:3.3.4]
+	at com.ecm1.ECM1.Ecm1Application.main(Ecm1Application.java:21) ~[classes/:na]
+Caused by: java.awt.HeadlessException: null
+	at java.desktop/java.awt.GraphicsEnvironment.checkHeadless(GraphicsEnvironment.java:166) ~[na:na]
+	at java.desktop/java.awt.Window.<init>(Window.java:553) ~[na:na]
+	at java.desktop/java.awt.Frame.<init>(Frame.java:428) ~[na:na]
+	at java.desktop/java.awt.Frame.<init>(Frame.java:393) ~[na:na]
+	at java.desktop/javax.swing.SwingUtilities$SharedOwnerFrame.<init>(SwingUtilities.java:1925) ~[na:na]
+	at java.desktop/javax.swing.SwingUtilities.getSharedOwnerFrame(SwingUtilities.java:2001) ~[na:na]
+	at java.desktop/javax.swing.JOptionPane.getRootFrame(JOptionPane.java:1696) ~[na:na]
+	at java.desktop/javax.swing.JOptionPane.getWindowForComponent(JOptionPane.java:1637) ~[na:na]
+	at java.desktop/javax.swing.JFileChooser.createDialog(JFileChooser.java:815) ~[na:na]
+	at java.desktop/javax.swing.JFileChooser.showDialog(JFileChooser.java:762) ~[na:na]
+	at java.desktop/javax.swing.JFileChooser.showOpenDialog(JFileChooser.java:668) ~[na:na]
+	at com.ecm1.ECM1.Ecm1Application.selectDirectory(Ecm1Application.java:41) ~[classes/:na]
+	at com.e
+
+
+
+
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
