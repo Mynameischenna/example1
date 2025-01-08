@@ -1,3 +1,16 @@
+ public boolean isMoved(String fileName){
+        if(fileName == "") return false;
+        try{
+            String folder = "C:\\ECM\\PVR\\processed files";
+            return true;
+        }catch(Exception e){
+            System.out.println(" error in proc");
+            return false;
+        }
+                
+    }
+
+
 package com.ecm1.ECM1;
 
 import org.springframework.beans.factory.annotation.Autowired;
