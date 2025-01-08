@@ -1,3 +1,123 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import javax.swing.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class PlanProcessorWithGUI {
+
+    public static void main(String[] args) {
+        try {
+            // Let user select directories using GUI
+            File parentDir = selectDirectory("Select Parent Directory");
+            File excelFile = selectFile("Select Excel File");
+            File allDocsDir = selectDirectory("Select AllDocs Directory");
+
+            if (parentDir == null || excelFile == null || allDocsDir == null) {
+                System.out.println("Operation canceled or invalid selection.");
+                return;
+            }
+
+            // Process Excel and documents
+            Map<String, Integer> planCounts = processExcelAndDocs(excelFile.getPath(), parentDir.getPath(), allDocsDir.getPath());
+            planCounts.forEach((planNum, count) ->
+                System.out.println("Plan Number: " + planNum + ", Count: " + count));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Show a directory chooser dialog
+    private static File selectDirectory(String dialogTitle) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle(dialogTitle);
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int result = fileChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return fileChooser.getSelectedFile();
+        }
+        return null;
+    }
+
+    // Show a file chooser dialog for selecting Excel files
+    private static File selectFile(String dialogTitle) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle(dialogTitle);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        // Add a filter for Excel files
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.isDirectory() || file.getName().toLowerCase().endsWith(".xlsx");
+            }
+
+            @Override
+            public String getDescription() {
+                return "Excel Files (*.xlsx)";
+            }
+        });
+
+        int result = fileChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return fileChooser.getSelectedFile();
+        }
+        return null;
+    }
+
+    public static Map<String, Integer> processExcelAndDocs(String excelFilePath, String parentDirPath, String allDocsDirPath) throws IOException {
+        // Read Excel and extract Plan Numbers
+        List<String> planNumbers = readExcel(excelFilePath);
+
+        // Locate all files in AllDocs directory
+        List<File> allDocs = Files.walk(Paths.get(allDocsDirPath))
+                .filter(Files::isRegularFile)
+                .map(Path::toFile)
+                .collect(Collectors.toList());
+
+        // Process each plan number and count matching files
+        Map<String, Integer> planCounts = new HashMap<>();
+        for (String planNum : planNumbers) {
+            int count = (int) allDocs.stream()
+                    .filter(file -> file.getName().contains(planNum))
+                    .count();
+            planCounts.put(planNum, count);
+        }
+
+        return planCounts;
+    }
+
+    public static List<String> readExcel(String filePath) throws IOException {
+        List<String> planNumbers = new ArrayList<>();
+        try (FileInputStream fis = new FileInputStream(new File(filePath));
+             Workbook workbook = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = workbook.getSheetAt(0); // Assuming data is in the first sheet
+            for (Row row : sheet) {
+                Cell cell = row.getCell(0); // Assuming PlanNum is in the first column
+                if (cell != null) {
+                    planNumbers.add(cell.getStringCellValue().trim());
+                }
+            }
+        }
+        return planNumbers;
+    }
+}
+
+
+
+
+
+
+
+
+
 package com.ecm1.ECM1;
 
 import org.apache.poi.ss.usermodel.Row;
