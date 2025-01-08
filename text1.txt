@@ -1,4 +1,58 @@
- public boolean isMoved(String fileName){
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
+
+public class FileMover {
+
+    public boolean isMoved(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return false; // If the file name is invalid, return false
+        }
+
+        try {
+            // Define source and destination directories
+            String sourceDir = "C:\\ECM\\PVR\\sourceFiles";  // Source directory
+            String destinationDir = "C:\\ECM\\PVR\\processed files";  // Destination directory
+
+            // Create Path objects for the source file and destination file
+            Path sourcePath = Paths.get(sourceDir, fileName);
+            Path destinationPath = Paths.get(destinationDir, fileName);
+
+            // Check if the source file exists
+            File sourceFile = sourcePath.toFile();
+            if (!sourceFile.exists()) {
+                System.out.println("File not found: " + fileName);
+                return false;
+            }
+
+            // Create destination directory if it does not exist
+            File destinationFolder = new File(destinationDir);
+            if (!destinationFolder.exists()) {
+                destinationFolder.mkdirs();  // Create directories if needed
+            }
+
+            // Move the file from the source to the destination
+            Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("File moved successfully: " + fileName);
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error moving file: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static void main(String[] args) {
+        FileMover fileMover = new FileMover();
+        String fileName = "example.txt"; // Example file name to be moved
+        boolean result = fileMover.isMoved(fileName);
+        System.out.println("File move result: " + result);
+    }
+}
+
+
+
+
+public boolean isMoved(String fileName){
         if(fileName == "") return false;
         try{
             String folder = "C:\\ECM\\PVR\\processed files";
