@@ -10,6 +10,289 @@ import org.springframework.web.client.RestTemplate;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+@Service
+public class Service1 {
+
+    private static final Logger LOGGER = Logger.getLogger(Service1.class.getName());
+
+    // Holds the count of files processed for each planNumber to handle versioning of files
+    private final Map<String, Integer> fileCount = new HashMap<>();
+
+    // Placeholder for user info, typically fetched dynamically from user session/context
+    private String currentUser = "User123";
+
+    @Value("${onbase.api.url}")  // Assuming the OnBase API URL is stored in application.properties or yml
+    private String onbaseApiUrl;
+
+    @Value("${onbase.api.key}")
+    private String onbaseApiKey;
+
+    /**
+     * Main method that processes the files based on the given Excel data, copying them 
+     * to a destination folder and creating corresponding JSON metadata files.
+     *
+     * @param excelFilePath path to the Excel file that contains metadata
+     * @param sourceDirPath path where the source PDF files are located
+     * @param destinationDirPath path where the PDF files should be copied, and JSON files should be created
+     * @throws Exception if any error occurs during processing
+     */
+    public void processFilesAndCreateJson(String excelFilePath, String sourceDirPath, String destinationDirPath) throws Exception {
+        try (InputStream inputStream = new FileInputStream(excelFilePath)) {
+            List<ModelMain> rows = parseExcelFile(inputStream);
+
+            for (ModelMain row : rows) {
+                File pdfFile = getFile(row.getPlanNumber(), sourceDirPath);
+                if (pdfFile != null) {
+                    // Log the success of file retrieval
+                    logAction("File Retrieval", "Success", "File found for plan: " + row.getPlanNumber(),
+                            pdfFile.getName(), pdfFile.getAbsolutePath());
+
+                    boolean fileCopied = copyFile(pdfFile, destinationDirPath);
+                    if (fileCopied) {
+                        // Log success of file copy
+                        logAction("File Copy", "Success", "File copied successfully.",
+                                pdfFile.getName(), pdfFile.getAbsolutePath());
+
+                        boolean jsonCreated = createJsonForFile(pdfFile, row, destinationDirPath);
+                        if (jsonCreated) {
+                            // Log success of JSON creation
+                            logAction("JSON Creation", "Success", "JSON created successfully.",
+                                    pdfFile.getName(), pdfFile.getAbsolutePath());
+
+                            // Step 3: QC Validation
+                            boolean isValid = performQC(pdfFile, row);
+                            if (isValid) {
+                                // QC Passed, proceed to OnBase upload
+                                boolean uploadedToOnBase = uploadToOnBase(pdfFile, row);
+                                if (uploadedToOnBase) {
+                                    logAction("OnBase Upload", "Success", "File uploaded to OnBase successfully.",
+                                            pdfFile.getName(), pdfFile.getAbsolutePath());
+                                } else {
+                                    logAction("OnBase Upload", "Failure", "Failed to upload file to OnBase.",
+                                            pdfFile.getName(), pdfFile.getAbsolutePath());
+                                }
+                            } else {
+                                logAction("QC Validation", "Failure", "File failed QC validation.",
+                                        pdfFile.getName(), pdfFile.getAbsolutePath());
+                            }
+                        } else {
+                            logAction("JSON Creation", "Failure", "Failed to create JSON.",
+                                    pdfFile.getName(), pdfFile.getAbsolutePath());
+                        }
+                    } else {
+                        logAction("File Copy", "Failure", "Failed to copy file.",
+                                pdfFile.getName(), pdfFile.getAbsolutePath());
+                    }
+                } else {
+                    logAction("File Retrieval", "Failure", "File not found for plan: " + row.getPlanNumber(),
+                            row.getPlanNumber(), sourceDirPath);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "An error occurred during file processing", e);
+            throw new Exception("Error occurred while processing files", e);
+        }
+    }
+
+    /**
+     * QC Validation step to verify file quality and metadata.
+     *
+     * @param pdfFile the PDF file to validate
+     * @param row the metadata associated with the file
+     * @return true if the file passes QC, false otherwise
+     */
+    private boolean performQC(File pdfFile, ModelMain row) {
+        // Implement your QC checks here (e.g., file format, metadata validity)
+        // Example: checking if the PDF file is not empty and the metadata is non-empty
+        boolean isFileValid = pdfFile.exists() && pdfFile.length() > 0;
+        boolean isMetadataValid = row != null && row.getPlanNumber() != null && !row.getPlanNumber().isEmpty();
+
+        if (!isFileValid) {
+            LOGGER.log(Level.WARNING, "File failed QC check (empty or invalid file): " + pdfFile.getAbsolutePath());
+        }
+        if (!isMetadataValid) {
+            LOGGER.log(Level.WARNING, "Metadata failed QC check (missing or invalid): " + row.getPlanNumber());
+        }
+
+        return isFileValid && isMetadataValid;
+    }
+
+    /**
+     * Uploads the file and metadata to OnBase using its API.
+     *
+     * @param pdfFile the PDF file to upload
+     * @param row the metadata to send to OnBase
+     * @return true if the file and metadata were uploaded successfully, false otherwise
+     */
+    private boolean uploadToOnBase(File pdfFile, ModelMain row) {
+        try {
+            // Construct the payload (metadata + file path) for OnBase API
+            OnBaseUploadRequest request = new OnBaseUploadRequest();
+            request.setPlanNumber(row.getPlanNumber());
+            request.setPlanName(row.getPlanName());
+            request.setFilePath(pdfFile.getAbsolutePath());
+
+            // Create RestTemplate to send data to OnBase API
+            RestTemplate restTemplate = new RestTemplate();
+            restTemplate.getInterceptors().add(new HttpRequestInterceptor(onbaseApiKey));
+
+            // Send the POST request to OnBase API
+            String url = onbaseApiUrl + "/upload";
+            String response = restTemplate.postForObject(url, request, String.class);
+
+            // Handle the response to check if the upload was successful
+            return response != null && response.contains("success");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error uploading to OnBase", e);
+            return false;
+        }
+    }
+
+    /**
+     * Parse the Excel file to extract the metadata.
+     *
+     * @param inputStream InputStream for the Excel file
+     * @return List of ModelMain objects representing rows of the Excel sheet
+     * @throws Exception if an error occurs during parsing
+     */
+    private List<ModelMain> parseExcelFile(InputStream inputStream) throws Exception {
+        List<ModelMain> excelRows = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);  // Assume first sheet contains data
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {  // Skipping header row (index 0)
+                Row row = sheet.getRow(i);
+                if (row == null) {  // Skip if row is empty
+                    continue;
+                }
+
+                String planName = getStringCellValue(row, 5); // Plan Name column (adjust index as needed)
+                String planNumber = getStringCellValue(row, 4); // Plan Number column (adjust index as needed)
+
+                ModelMain ecm = new ModelMain(planNumber, planName);
+                excelRows.add(ecm);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error while parsing Excel file", e);
+            throw new Exception("Error while parsing the Excel file", e);
+        }
+        return excelRows;
+    }
+
+    /**
+     * Fetches the value of a cell, safely handling nulls and blank cells.
+     *
+     * @param row the row containing the cell
+     * @param columnIndex the index of the cell to fetch
+     * @return the cell value as a String, or empty string if the cell is null
+     */
+    private String getStringCellValue(Row row, int columnIndex) {
+        Cell cell = row.getCell(columnIndex);
+        if (cell == null) {
+            return "";
+        }
+        return cell.toString().trim();
+    }
+
+    /**
+     * Logs actions for auditing purposes.
+     *
+     * @param action the action performed (e.g., "File Retrieval")
+     * @param status the status of the action (e.g., "Success")
+     * @param message a descriptive message about the action
+     * @param fileName the name of the file associated with the action
+     * @param filePath the full path of the file associated with the action
+     */
+    private void logAction(String action, String status, String message, String fileName, String filePath) {
+        try {
+            // Here we can use a custom audit logger that writes to a database or a file
+            AuditTrailLogger.logAction(action, status, message, fileName, filePath, currentUser);
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error logging action: " + action, e);
+        }
+    }
+
+    /**
+     * Copies the PDF file to the destination directory.
+     *
+     * @param pdfFile the PDF file to copy
+     * @param destinationDirPath the path of the destination directory
+     * @return true if the file was copied successfully, false otherwise
+     */
+    private boolean copyFile(File pdfFile, String destinationDirPath) {
+        try {
+            Path destinationPath = Paths.get(destinationDirPath, pdfFile.getName());
+            Files.copy(pdfFile.toPath(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to copy file: " + pdfFile.getAbsolutePath(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Creates a JSON file with metadata for the given PDF file.
+     *
+     * @param pdfFile the PDF file
+     * @param row the metadata for the file
+     * @param destinationDirPath the destination directory where the JSON will be saved
+     * @return true if the JSON was created successfully, false otherwise
+     */
+    private boolean createJsonForFile(File pdfFile, ModelMain row, String destinationDirPath) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonFilePath = destinationDirPath + "/" + pdfFile.getName() + ".json";
+
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("planNumber", row.getPlanNumber());
+            metadata.put("planName", row.getPlanName());
+            metadata.put("filePath", pdfFile.getAbsolutePath());
+
+            // Write the JSON metadata to the file
+            objectMapper.writeValue(new File(jsonFilePath), metadata);
+            return true;
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to create JSON file for: " + pdfFile.getAbsolutePath(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Gets the PDF file associated with the planNumber from the source directory.
+     *
+     * @param planNumber the plan number to search for
+     * @param sourceDirPath the path of the source directory containing PDF files
+     * @return the file if found, or null if not found
+     */
+    private File getFile(String planNumber, String sourceDirPath) {
+        File sourceDir = new File(sourceDirPath);
+        File[] files = sourceDir.listFiles((dir, name) -> name.contains(planNumber) && name.endsWith(".pdf"));
+        if (files != null && files.length > 0) {
+            return files[0];  // Assuming the first match is the correct file
+        }
+        return null;
+    }
+}
+
+
+
+
+
+package com.ecm1.ECM1;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.logging.Level;
 import java.util.logging.Logger;
