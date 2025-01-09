@@ -1,5 +1,173 @@
 package com.ecm1.ECM1;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
+
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.regex.Pattern;
+
+@Service
+public class Service1 {
+
+    private HashMap<String, Integer> fileCount = new HashMap<>();
+
+    // Main method for processing the files and creating JSON files
+    public void processFilesAndCreateJson(String excelFilePath, String sourceDirPath, String destinationDirPath) throws Exception {
+        try (InputStream inputStream = new FileInputStream(excelFilePath)) {
+            // Read and parse the Excel file
+            List<ModelMain> rows = parseExcelFile(inputStream);
+
+            for (ModelMain row : rows) {
+                // Get the file based on plan number from the Excel metadata
+                File pdfFile = getFile(row.getPlanNumber(), sourceDirPath);
+                if (pdfFile != null) {
+                    // Copy the file to the destination directory
+                    boolean fileCopied = copyFile(pdfFile, destinationDirPath);
+                    if (fileCopied) {
+                        // 2. Create JSON for the copied file
+                        createJsonForFile(pdfFile, row, destinationDirPath);
+                    }
+                }
+            }
+        }
+    }
+
+    // Parse the Excel file and extract rows of metadata
+    private List<ModelMain> parseExcelFile(InputStream inputStream) throws Exception {
+        List<ModelMain> excelRows = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);  // Assume the first sheet contains data
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) {  // Skip row if it's empty
+                    continue;
+                }
+                // Extract data from each cell
+                String plan_name = row.getCell(5).getStringCellValue();
+                String plan_number = row.getCell(4).getStringCellValue();
+
+                // Create a ModelMain object and add it to the list
+                ModelMain ecm = new ModelMain(plan_number, plan_name);
+                excelRows.add(ecm);
+            }
+        }
+        return excelRows;
+    }
+
+    // Locate the file corresponding to a plan number
+    public File getFile(String planNumber, String sourceDirPath) throws Exception {
+        // Retrieve the current count for the plan number
+        int count = fileCount.getOrDefault(planNumber, 1);
+
+        // Construct the regex pattern dynamically to match file names
+        String regex = String.format("%s_PRU_%d_\\d_\\d{8}_\\d{4}MST\\.pdf", planNumber, count);
+
+        // Compile the pattern
+        Pattern pattern = Pattern.compile(regex);
+
+        // Define the source directory path
+        File directory = new File(sourceDirPath);
+
+        // Filter files in the directory matching the regex pattern
+        File[] matchingFiles = directory.listFiles((dir, name) -> pattern.matcher(name).matches());
+
+        // Return the first matching file if found
+        if (matchingFiles != null && matchingFiles.length > 0) {
+            fileCount.put(planNumber, count + 1);
+            return matchingFiles[0];
+        }
+        return null;
+    }
+
+    // Copy the file to the destination directory
+    public boolean copyFile(File file, String destinationDirPath) throws IOException {
+        if (file == null || !file.exists()) {
+            System.out.println("File does not exist or is invalid: " + file);
+            return false;
+        }
+
+        Path sourcePath = file.toPath();
+        Path destinationPath = Paths.get(destinationDirPath, file.getName());
+
+        // Create destination directory if it does not exist
+        File destinationFolder = new File(destinationDirPath);
+        if (!destinationFolder.exists()) {
+            destinationFolder.mkdirs();
+        }
+
+        // Copy the file to the destination directory
+        Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+        System.out.println("File copied successfully: " + file.getName());
+        return true;
+    }
+
+    // Create a JSON file for the given PDF file using its metadata
+    private void createJsonForFile(File pdfFile, ModelMain metaData, String destinationDirPath) throws Exception {
+        // 1. Build the metadata JSON (model object)
+        String json = buildJsonFromMeta(metaData);
+
+        // 2. Get the path for the new JSON file (with .json extension)
+        Path jsonFilePath = Paths.get(destinationDirPath, pdfFile.getName().replace(".pdf", ".json"));
+
+        // 3. Write the JSON to the file
+        Files.write(jsonFilePath, json.getBytes());
+        System.out.println("JSON file created: " + jsonFilePath.toString());
+    }
+
+    // Convert the ModelMain metadata to JSON
+    private String buildJsonFromMeta(ModelMain metaData) throws Exception {
+        // 1. Create an ObjectMapper (from Jackson) for JSON conversion
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // 2. Convert the ModelMain object into JSON
+        return objectMapper.writeValueAsString(metaData);
+    }
+
+    // This is a simple ModelMain class with plan number and name
+    public static class ModelMain {
+        private String planNumber;
+        private String planName;
+
+        // Constructor
+        public ModelMain(String planNumber, String planName) {
+            this.planNumber = planNumber;
+            this.planName = planName;
+        }
+
+        // Getters and setters
+        public String getPlanNumber() {
+            return planNumber;
+        }
+
+        public void setPlanNumber(String planNumber) {
+            this.planNumber = planNumber;
+        }
+
+        public String getPlanName() {
+            return planName;
+        }
+
+        public void setPlanName(String planName) {
+            this.planName = planName;
+        }
+    }
+
+    // This method is a placeholder for uploading the files to OnBase (this will depend on the OnBase API)
+    public void uploadFileToOnBase(Path filePath) throws Exception {
+        // Here, you can add the logic for uploading to OnBase. This depends on how OnBase integration is set up.
+        System.out.println("Uploading file to OnBase: " + filePath.toString());
+    }
+}
+
+
+
+
+package com.ecm1.ECM1;
+
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
