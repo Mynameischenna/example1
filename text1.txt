@@ -1,4 +1,127 @@
-	• Select a directory
+package com.ecm1.ECM1;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
+
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.regex.Pattern;
+
+
+@Service
+public class Service1 {
+    private HashMap<String, Integer> fileCount = new HashMap<>();
+
+    void processFile(String filePath) throws Exception {
+        try (InputStream inputStream = new FileInputStream(filePath)) {
+            // get the list of rows
+            List<ModelMain> rows = parseExcelFile(inputStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Error processing file: " + e.getMessage());
+        }
+    }
+
+    private List<ModelMain> parseExcelFile(InputStream inputStream) throws Exception {
+        List<ModelMain> excelRows = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);  // Assume the first sheet contains data
+            for (int i = 1; i <= sheet.getLastRowNum() ; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) {  // Skip row if its empty
+                    continue;
+                }
+                // Extract data from each cell
+                String plan_name = row.getCell(5).getStringCellValue();
+                String plan_number = row.getCell(4).getStringCellValue();
+                // Get the associated file
+                File file = getFile(plan_number);
+                if(file != null){
+                    if(isMoved(file)){
+                        System.out.println("filed moved :"+file.getName());
+                    }else{
+                        System.out.println("not moved "+file.getName());
+                    }
+                }else{
+                    System.out.println("file is null");
+                }
+
+                // Create an ModelMain object and add it to the list with file content
+                ModelMain ecm = new ModelMain(plan_number, plan_name);
+                excelRows.add(ecm);
+            }
+            return excelRows;
+        }
+    }
+
+    public File getFile(String planNumber) throws Exception {
+        // Retrieve the current count for the plan number
+        int count = fileCount.getOrDefault(planNumber, 1);
+
+        // Construct the regex pattern dynamically
+        String regex = String.format("%s_PRU_%d_\\d_\\d{8}_\\d{4}MST\\.pdf", planNumber, count);
+
+        // Print the regex for debugging
+        System.out.println("Regex: " + regex);
+
+        // Compile the pattern
+        Pattern pattern = Pattern.compile(regex);
+
+        // Define the directory path
+        String directoryPath = "C:\\ECM\\PVR\\All_20231218_1552MST\\";
+        File directory = new File(directoryPath);
+
+        // Filter files in the directory matching the regex pattern
+        File[] matchingFiles = directory.listFiles((dir, name) -> pattern.matcher(name).matches());
+
+        // Return the first matching file if found
+        if (matchingFiles != null && matchingFiles.length > 0) {
+            fileCount.put(planNumber, count + 1);
+//            System.out.println("Found file name: " + matchingFiles[0].getName())
+            return matchingFiles[0];
+        }
+        // if file not found
+        System.out.println("file not found");
+        return null;
+    }
+
+    public boolean isMoved(File file) {
+        if (file == null || !file.exists()) {
+            System.out.println("File does not exist or is invalid: " + file);
+            return false; // If the file is invalid or doesn't exist
+        }
+
+        try {
+            // Define source and destination directories
+            String sourceDir = "C:\\ECM\\PVR\\All_20231218_1552MST\\";  // Source directory
+            String destinationDir = "C:\\ECM\\PVR\\processed files\\";  // Destination directory
+
+            // Create Path objects for the source file and destination file
+            Path sourcePath = file.toPath();
+            Path destinationPath = Paths.get(destinationDir, file.getName());
+
+            // Create destination directory if it does not exist
+            File destinationFolder = new File(destinationDir);
+            if (!destinationFolder.exists()) {
+                destinationFolder.mkdirs();  // Create directories if needed
+            }
+
+            // Move the file from the source to the destination
+            Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("File moved successfully: " + file.getName());
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error moving file: " + e.getMessage());
+            return false;
+        }
+    }
+    }
+
+
+
+• Select a directory
 		○ Contains Excel spreadsheet - select this
 		○ Contains All… directory containing docs - select this
 	• Read excel spreadsheet 
