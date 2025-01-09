@@ -1,3 +1,30 @@
+	• Select a directory
+		○ Contains Excel spreadsheet - select this
+		○ Contains All… directory containing docs - select this
+	• Read excel spreadsheet 
+		○ Use PlanNumber and count to select file
+		○ For example, 1st PlanNumber is 591121-01 and 1st plan occurrence
+			§ File name is 591121-01_PRU_1_6_20231218_1553MST.pdf
+			§                       ' PlanNum  '       'Cnt'
+		○ For prototype
+		○ 1st step
+			i. Build a GUI
+			ii. Locate and select parent directory, excel ss, and All… directory
+			iii. Read excel ss and process plans row by row
+			iv. For each row, process while plan number is the same, increment participant counter, select appropriate file
+			v. Copy file to a Temp directory
+		○ 2nd step 
+			§ For each file, extract meta-data for OnBase from excel ss
+			§ Build the JSON for meta-data
+			§ Write this JSON to the Temp directory with the file  using the file name and file type of .json
+			§ Create an audit trail file noting success and failure
+		○ 3rd step
+			§ QC and ensure we have correct file and json
+Write file and json to OnBase
+
+
+
+
 
     public boolean isMoved(File file) {
         if (file == null || !file.exists()) {
