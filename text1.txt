@@ -1,3 +1,19 @@
+Use RK - Participant type
+		○ SSN - If blank, put in audit trail as error
+		○ SSN Extension - 1, 2, 3, … - is it there? Will we add from EASY? If exists, use it, if not, leave blank
+		○ IndividualID - another primary key - IND_ID column - If blank, put in audit trail as error
+		○ Plan Number
+		○ Plan Name
+		○ DBINST - 401k, … - Database column - Add from EASY? - DATABASE, SOURCE_SYSTEM - Column D
+		○ CATEGORY - "PARTICIPANT CERTIFICATE" (50 characters)  - Hard coded?
+		○ Document Details - "Regulatory" (100 characters)  - Hard coded?
+		○ Legacy Plan Number - think about - Legacy Doc ID, Date - Not for now - Prior Plan
+		○ Certificate Issue Date
+		○ Participant Name - How to store? Is it in OnBase
+		○ Date - Timestamped on load
+
+
+
 package com.ecm1.ECM1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
