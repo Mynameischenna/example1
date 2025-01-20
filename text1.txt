@@ -1,3 +1,55 @@
+/ Main method for processing the files and creating JSON files
+    public void processFilesAndCreateJson(String excelFilePath, String sourceDirPath, String destinationDirPath) throws Exception {
+        try (InputStream inputStream = new FileInputStream(excelFilePath)) {
+            // Read and parse the Excel file
+            List<ModelMain> rows = parseExcelFile(inputStream);
+            for(ModelMain m : rows){
+                System.out.println(m);
+            }
+
+            for (ModelMain row : rows) {
+                // Get the file based on plan number from the Excel metadata
+                File pdfFile = getPdf.getFile(row.getPlanNumber(), sourceDirPath,fileCount);
+                if (pdfFile != null) {
+                    // 1. Log file retrieval
+                    AuditTrailLogger.logAction("File Retrieval", "Success", "File found for plan: " + row.getPlanNumber(),
+                            pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+
+                    // Copy the file to the destination directory
+                    boolean fileCopied = getPdf.copyFile(pdfFile, destinationDirPath);
+                    if (fileCopied) {
+                        // 2. Log successful file copy
+                        AuditTrailLogger.logAction("File Copy", "Success", "File copied successfully.",
+                                pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+
+                        // 3. Create JSON for the copied file
+                        boolean jsonCreated = createJson.createJsonForFile(pdfFile, row, destinationDirPath);
+                        if (jsonCreated) {
+                            // 4. Log successful JSON creation
+                            AuditTrailLogger.logAction("JSON Creation", "Success", "JSON created successfully.",
+                                    pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+                        } else {
+                            // 4. Log failed JSON creation
+                            AuditTrailLogger.logAction("JSON Creation", "Failure", "Failed to create JSON.",
+                                    pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+                        }
+                    } else {
+                        // Log failure in file copy
+                        AuditTrailLogger.logAction("File Copy", "Failure", "Failed to copy file.",
+                                pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+                    }
+                } else {
+                    // Log failure in file retrieval
+                    AuditTrailLogger.logAction("File Retrieval", "Failure", "File not found for plan: " + row.getPlanNumber(),
+                            row.getPlanNumber(), sourceDirPath, currentUser);
+                }
+            }
+        }
+    }
+
+
+
+
 package com.ecm1.ECM1;
 
 import java.io.*;
