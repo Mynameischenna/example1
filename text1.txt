@@ -1,3 +1,106 @@
+
+public void processFilesAndCreateJson(String excelFilePath, String sourceDirPath, String destinationDirPath) throws Exception {
+    int successCount = 0; // Counter for successful actions
+    int failureCount = 0; // Counter for failed actions
+
+    try (InputStream inputStream = new FileInputStream(excelFilePath)) {
+        // Read and parse the Excel file
+        List<ModelMain> rows = parseExcelFile(inputStream);
+
+        // Debugging: Print parsed rows
+        for (ModelMain m : rows) {
+            System.out.println(m);
+        }
+
+        for (ModelMain row : rows) {
+            // Get the file based on plan number from the Excel metadata
+            File pdfFile = getPdf.getFile(row.getPlanNumber(), sourceDirPath, fileCount);
+            if (pdfFile != null) {
+                // Log file retrieval success
+                AuditTrailLogger.logAction("File Retrieval", "Success", "File found for plan: " + row.getPlanNumber(),
+                        pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+
+                // Copy the file to the destination directory
+                boolean fileCopied = getPdf.copyFile(pdfFile, destinationDirPath);
+                if (fileCopied) {
+                    // Log successful file copy
+                    AuditTrailLogger.logAction("File Copy", "Success", "File copied successfully.",
+                            pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+
+                    // Create JSON for the copied file
+                    boolean jsonCreated = createJson.createJsonForFile(pdfFile, row, destinationDirPath);
+                    if (jsonCreated) {
+                        // Log successful JSON creation
+                        AuditTrailLogger.logAction("JSON Creation", "Success", "JSON created successfully.",
+                                pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+                        successCount++; // Increment success counter
+                    } else {
+                        // Log failed JSON creation
+                        AuditTrailLogger.logAction("JSON Creation", "Failure", "Failed to create JSON.",
+                                pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+                        failureCount++; // Increment failure counter
+                    }
+                } else {
+                    // Log failure in file copy
+                    AuditTrailLogger.logAction("File Copy", "Failure", "Failed to copy file.",
+                            pdfFile.getName(), pdfFile.getAbsolutePath(), currentUser);
+                    failureCount++; // Increment failure counter
+                }
+            } else {
+                // Log failure in file retrieval
+                AuditTrailLogger.logAction("File Retrieval", "Failure", "File not found for plan: " + row.getPlanNumber(),
+                        row.getPlanNumber(), sourceDirPath, currentUser);
+                failureCount++; // Increment failure counter
+            }
+        }
+    }
+
+    // Log summary of processing
+    AuditTrailLogger.logAction(
+            "Summary",
+            "Info",
+            "Processing completed. Total Success: " + successCount + ", Total Failure: " + failureCount,
+            "Summary",
+            excelFilePath,
+            currentUser
+    );
+}
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class AuditTrailLogger {
+
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public static void logAction(String actionType, String status, String message, String fileName, String filePath, String user) {
+        String timestamp = dateFormat.format(new Date());
+        String logEntry = String.format(
+                "Date: %s\nAction: %s\nStatus: %s\nMessage: %s\nFile Name: %s\nFile Path: %s\nUser: %s\n--------------------------------------------------",
+                timestamp, actionType, status, message, fileName, filePath, user
+        );
+        System.out.println(logEntry);
+
+        // You can also write the log entry to a file if needed:
+        // writeLogToFile(logEntry);
+    }
+
+    // Example of writing log entries to a file (optional)
+    private static void writeLogToFile(String logEntry) {
+        try {
+            Files.write(
+                    Paths.get("audit-trail.log"),
+                    (logEntry + System.lineSeparator()).getBytes(),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+
+
 / Main method for processing the files and creating JSON files
     public void processFilesAndCreateJson(String excelFilePath, String sourceDirPath, String destinationDirPath) throws Exception {
         try (InputStream inputStream = new FileInputStream(excelFilePath)) {
