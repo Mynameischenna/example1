@@ -1,5 +1,47 @@
 package com.ecm1.ECM1;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class AuditTrailLogger {
+
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final String LOG_FILE_PATH = "C:\\ECM\\PVR\\audit-trail.log"; // Path to the log file
+
+    public static void logAction(String actionType, String status, String message, String fileName, String filePath, String user) {
+        String timestamp = dateFormat.format(new Date());
+        String logEntry = String.format(
+                "Date: %s\nAction: %s\nStatus: %s\nMessage: %s\nFile Name: %s\nFile Path: %s\nUser: %s\n--------------------------------------------------",
+                timestamp, actionType, status, message, fileName, filePath, user
+        );
+
+        // Write the log entry to the file
+        writeLogToFile(logEntry);
+    }
+
+    // Writes log entries to the specified log file
+    private static void writeLogToFile(String logEntry) {
+        try {
+            Files.write(
+                    Paths.get(LOG_FILE_PATH),
+                    (logEntry + System.lineSeparator()).getBytes(),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND
+            );
+        } catch (IOException e) {
+            System.err.println("Error writing log to file: " + e.getMessage());
+        }
+    }
+}
+
+
+
+
+package com.ecm1.ECM1;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
