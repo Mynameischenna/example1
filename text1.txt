@@ -1,5 +1,84 @@
 package com.ecm1.ECM1;
 
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class AuditTrailLogger {
+
+    private static final String LOG_FILE_PATH = "C:\\ECM\\PVR\\audit-trail.log";
+
+    // Tracks successes and failures
+    private static int successCount = 0;
+    private static int failureCount = 0;
+
+    // Log the start of file processing
+    public static void logProcessingStart(String inputFileName, String sheetName) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_FILE_PATH, true))) {
+            String timestamp = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date());
+            writer.write(String.format("Date: %s\n", timestamp));
+            writer.write(String.format("Input File Name: %s\n", inputFileName));
+            writer.write(String.format("Sheet Name: %s\n", sheetName));
+            writer.write("File Processing Starts\n");
+            writer.newLine();
+        } catch (IOException e) {
+            System.out.println("Error writing to audit trail: " + e.getMessage());
+        }
+    }
+
+    // Log processing details for a specific plan
+    public static void logProcessingPlan(String planNumber, String templateFile) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_FILE_PATH, true))) {
+            writer.write(String.format("Processing Plan: %s\n", planNumber));
+            writer.write(String.format("Template File: %s\n", templateFile));
+            writer.newLine();
+        } catch (IOException e) {
+            System.out.println("Error writing to audit trail: " + e.getMessage());
+        }
+    }
+
+    // Log actions with status and user information
+    public static void logAction(String actionType, String status, String message, String fileName, String filePath, String user) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_FILE_PATH, true))) {
+            String timestamp = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date());
+            String logEntry = String.format("[%s] Action: %s, Status: %s, Message: %s, File: %s, File Path: %s, User: %s",
+                    timestamp, actionType, status, message, fileName, filePath, user);
+            writer.write(logEntry);
+            writer.newLine();
+
+            // Increment success or failure counts
+            if ("Success".equalsIgnoreCase(status)) {
+                successCount++;
+            } else {
+                failureCount++;
+            }
+        } catch (IOException e) {
+            System.out.println("Error writing to audit trail: " + e.getMessage());
+        }
+    }
+
+    // Log the end of processing with a summary
+    public static void logProcessingSummary() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LOG_FILE_PATH, true))) {
+            writer.write("File Processing Ends\n");
+            writer.write(String.format("Total Successes: %d\n", successCount));
+            writer.write(String.format("Total Failures: %d\n", failureCount));
+            writer.newLine();
+
+            // Reset counters for the next run
+            successCount = 0;
+            failureCount = 0;
+        } catch (IOException e) {
+            System.out.println("Error writing to audit trail: " + e.getMessage());
+        }
+    }
+}
+
+
+
+
+package com.ecm1.ECM1;
+
 
 
 import java.io.*;
