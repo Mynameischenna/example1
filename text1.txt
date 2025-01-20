@@ -12,6 +12,105 @@ public class AuditTrailLogger {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final String LOG_FILE_PATH = "C:\\ECM\\PVR\\audit-trail.log"; // Path to the log file
 
+    // Flags for tracking success and failure counts
+    private static int successCount = 0;
+    private static int failureCount = 0;
+
+    // Flag to track if the headers are written
+    private static boolean headersWritten = false;
+
+    public static void logAction(String actionType, String status, String message, String fileName, String filePath, String user) {
+        // Ensure headers are written only once
+        if (!headersWritten) {
+            writeHeaders();
+            headersWritten = true;
+        }
+
+        String timestamp = dateFormat.format(new Date());
+
+        // Update the success or failure count
+        if ("Success".equalsIgnoreCase(status)) {
+            successCount++;
+        } else if ("Failure".equalsIgnoreCase(status)) {
+            failureCount++;
+        }
+
+        // Format the log entry to be in a single line
+        String logEntry = String.format(
+                "%s | Action: %s | Status: %s | Message: %s | File Name: %s | File Path: %s | User: %s",
+                timestamp, actionType, status, message, fileName, filePath, user
+        );
+
+        // Write the log entry to the file
+        writeLogToFile(logEntry);
+        // Add a space (new line) after each log entry for better readability
+        writeLogToFile("\n");
+    }
+
+    // Writes the header only once at the beginning of the log file
+    private static void writeHeaders() {
+        String header = String.format(
+                "==================================================\n" +
+                "                 ECM1 Audit Log\n" +
+                "              Environment: Production\n" +
+                "            Log Start Time: %s\n" +
+                "==================================================\n\n", 
+                dateFormat.format(new Date())
+        );
+
+        writeLogToFile(header);
+    }
+
+    // Writes the footer with success and failure counts
+    private static void writeFooter() {
+        String footer = String.format(
+                "\n==================================================\n" +
+                "           End of ECM1 Audit Log\n" +
+                "           Success Count: %d\n" +
+                "           Failure Count: %d\n" +
+                "==================================================\n",
+                successCount, failureCount
+        );
+
+        writeLogToFile(footer);
+    }
+
+    // Writes log entries to the specified log file
+    private static void writeLogToFile(String logEntry) {
+        try {
+            Files.write(
+                    Paths.get(LOG_FILE_PATH),
+                    logEntry.getBytes(),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND
+            );
+        } catch (IOException e) {
+            System.err.println("Error writing log to file: " + e.getMessage());
+        }
+    }
+
+    // Method to call at the end of the program to write footer
+    public static void closeLogFile() {
+        writeFooter();
+    }
+}
+
+
+
+
+package com.ecm1.ECM1;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class AuditTrailLogger {
+
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final String LOG_FILE_PATH = "C:\\ECM\\PVR\\audit-trail.log"; // Path to the log file
+
     // Flag to track if the headers are written
     private static boolean headersWritten = false;
 
