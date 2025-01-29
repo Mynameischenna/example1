@@ -1,3 +1,7 @@
+Could not transfer artifact com.aspose:aspose-words:pom:23.3.0 from/to AsposeRepository (https://repository.aspose.com/repo/): Connection reset
+
+
+
 <dependencies>
 
     <!-- Spring Boot Starter -->
