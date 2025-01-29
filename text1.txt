@@ -1,3 +1,18 @@
+
+    private static void auditLog(String fileName, String status, String errorMessage) {
+        String logEntry = String.format("%s | File: %s | Status: %s | Error: %s",
+                LocalDateTime.now(), fileName, status, (errorMessage != null ? errorMessage : "None"));
+        
+        // Append to an audit log file
+        try {
+            Files.write(Paths.get("audit.log"), (logEntry + System.lineSeparator()).getBytes(),
+                        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Failed to write to audit log", e);
+        }
+    }
+
+
 package com.ecm1.ECM1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
