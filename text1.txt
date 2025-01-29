@@ -1,3 +1,51 @@
+<dependencies>
+
+    <!-- Spring Boot Starter -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+
+    <!-- Aspose Words -->
+    <dependency>
+        <groupId>com.aspose</groupId>
+        <artifactId>aspose-words</artifactId>
+        <version>23.3.0</version>
+    </dependency>
+
+    <!-- Aspose PDF -->
+    <dependency>
+        <groupId>com.aspose</groupId>
+        <artifactId>aspose-pdf</artifactId>
+        <version>23.3.0</version>
+    </dependency>
+
+    <!-- Swing UI Support -->
+    <dependency>
+        <groupId>org.swinglabs</groupId>
+        <artifactId>swingx</artifactId>
+        <version>1.6.4</version>
+    </dependency>
+
+    <!-- Spring Boot DevTools (Optional - For Fast Restart) -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-devtools</artifactId>
+        <scope>runtime</scope>
+        <optional>true</optional>
+    </dependency>
+
+</dependencies>
+<repositories>
+    <repository>
+        <id>AsposeRepository</id>
+        <url>https://repository.aspose.com/repo/</url>
+    </repository>
+</repositories>
+
+
+
+
 package com.ecm1.ECM1;
 
 import com.ecm1.ECM1.controller.ECMcontroller;
