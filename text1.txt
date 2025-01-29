@@ -1,3 +1,15 @@
+$smtpServer = "smtp.yourserver.com"
+$smtpFrom = "your-email@domain.com"
+$smtpTo = "recipient-email@domain.com"
+$messageSubject = "Application Error Alert"
+$messageBody = "An application error occurred. Please check the Event Viewer for more details."
+
+$smtp = New-Object Net.Mail.SmtpClient($smtpServer)
+$smtp.Send($smtpFrom, $smtpTo, $messageSubject, $messageBody)
+
+
+
+
 
 <dependency>
     <groupId>xerces</groupId>
