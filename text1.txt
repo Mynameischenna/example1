@@ -1,3 +1,6 @@
+
+123
+
 $smtpServer = "smtp.yourserver.com"
 $smtpFrom = "your-email@domain.com"
 $smtpTo = "recipient-email@domain.com"
