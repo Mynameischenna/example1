@@ -1,4 +1,10 @@
-	Monitor a specific machine
+sudo yum install -y amazon-cloudwatch-agent  # For Amazon Linux/RHEL
+sudo apt-get install -y amazon-cloudwatch-agent  # For Ubuntu/Debian
+
+
+
+
+Monitor a specific machine
 	• Do this in HRLC DEV account
 	• For AWS EC2 appcompl04d
 	• Open up Event Viewer - search Event Viewer in search box
