@@ -1,3 +1,9 @@
+ Step 1: Install & Start CloudWatch Agent on EC2.
+✅ Step 2: Configure CloudWatch to collect Event Viewer logs.
+✅ Step 3: Set up SNS for email/SMS alerts.
+✅ Step 4: Create a CloudWatch Alarm to trigger alerts.
+
+
 sudo yum install -y amazon-cloudwatch-agent  # For Amazon Linux/RHEL
 sudo apt-get install -y amazon-cloudwatch-agent  # For Ubuntu/Debian
 
