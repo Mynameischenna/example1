@@ -1,4 +1,14 @@
- Step 1: Install & Start CloudWatch Agent on EC2.
+Install-WindowsFeature : ArgumentNotValid: The role, role service, or feature name is not valid: 'CloudWatchAgent'.
+The name was not found.
+At line:1 char:1
++ Install-WindowsFeature -Name "CloudWatchAgent"
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (CloudWatchAgent:String) [Install-WindowsFeature], Exception
+    + FullyQualifiedErrorId : NameDoesNotExist,Microsoft.Windows.ServerManager.Command
+
+
+
+Step 1: Install & Start CloudWatch Agent on EC2.
 ✅ Step 2: Configure CloudWatch to collect Event Viewer logs.
 ✅ Step 3: Set up SNS for email/SMS alerts.
 ✅ Step 4: Create a CloudWatch Alarm to trigger alerts.
