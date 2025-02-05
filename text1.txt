@@ -1,3 +1,8 @@
+
+Invoke-WebRequest -Uri https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/AmazonCloudWatchAgent.msi -OutFile C:\AmazonCloudWatchAgent.msi
+
+
+
 Install-WindowsFeature : ArgumentNotValid: The role, role service, or feature name is not valid: 'CloudWatchAgent'.
 The name was not found.
 At line:1 char:1
