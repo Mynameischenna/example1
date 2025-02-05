@@ -1,3 +1,37 @@
+Workflow
+	1. Get email address from Excel ss report
+	2. Send email through SMTP
+	3. After 30 minutes, query Splunk
+		a. Use from address in query
+		b. DSN code returned, 2 is success, 4 is soft bounce, 5 is hard bounce
+		c. If a 4, wait for system to resend
+	4. For hard bounces, send a message to admin to clean up offending email address
+	5. Save hard bounce emails in a DBMS to not resend
+	
+Chris Scott - another team that is looking at using Proofpoint for bounceback.
+New concept from ProofPoint, a process that does a response code DSN Deliver System Notification
+Submit mail to SMTP, hop to PostFix, then to ProofPoint, then to customer
+Message tracking detail is in ProofPoint, stored in Splunk. The DSN JSON response is on an event. Stored in a JSON format.
+Unique From address - not just reply-to for example. 123456789reply-to
+DSN 2 success
+DSN 4 soft bounce
+DSN 5 hard bounce
+
+Logging to Splunk is not immediate, takes a while to propagate
+Use from email address to search Splunk
+Takes time to propagate - give it 30 minutes to propagate
+REST API - Splunk - Jim Foster
+Pre-staged query to Splunk, use from address, sub-domain of empower
+SpecialProducts.empower.com for example as domain
+
+Tami and Jen reach out to other group
+Bounce mgmt is key to "email reputation" for a company
+Each app would have its own boundary with sub-domains
+Hrlc-5144
+
+
+
+
 
 Invoke-WebRequest -Uri https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/AmazonCloudWatchAgent.msi -OutFile C:\AmazonCloudWatchAgent.msi
 
