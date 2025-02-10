@@ -1,3 +1,7 @@
+Invoke-WebRequest -Uri "sandbox:/mnt/data/Cloudwatch_Email_Alerts.docx" -OutFile "C:\Users\YourUser\Downloads\Cloudwatch_Email_Alerts.docx"
+
+
+
 Workflow
 	1. Get email address from Excel ss report
 	2. Send email through SMTP
