@@ -1,0 +1,73 @@
+**Monitoring CloudWatch Logs and Triggering Email Alerts for Errors**
+
+## **1. Introduction**
+Amazon CloudWatch is a monitoring service for AWS resources and applications. To receive email alerts when errors appear in logs, we need to configure CloudWatch log monitoring and set up Amazon SNS for notifications.
+
+---
+
+## **2. Steps to Set Up CloudWatch Log Monitoring and Email Alerts**
+
+### **Step 1: Install and Configure CloudWatch Agent**
+1. Download and install the **Amazon CloudWatch Agent** on your Windows server.
+2. Configure the agent to collect logs using:
+   ```powershell
+   & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-config-wizard.exe"
+   ```
+3. Start the agent:
+   ```powershell
+   Start-Service AmazonCloudWatchAgent
+   ```
+
+---
+
+### **Step 2: Create a Log Group in CloudWatch**
+1. Go to **AWS Console → CloudWatch**.
+2. Navigate to **Logs → Log Groups**.
+3. Click **Create log group**, provide a name, and configure retention settings.
+4. Configure CloudWatch Agent to send logs to this log group.
+
+---
+
+### **Step 3: Create a Metric Filter for Errors**
+1. In **CloudWatch → Log Groups**, select the log group where logs are being stored.
+2. Click on **Create Metric Filter**.
+3. Define a pattern to detect errors (e.g., `ERROR`, `Exception`).
+4. Assign a metric name and namespace.
+
+---
+
+### **Step 4: Set Up an Alarm for Error Logs**
+1. Go to **CloudWatch → Alarms**.
+2. Click **Create Alarm**.
+3. Select the metric created in the previous step.
+4. Define a threshold (e.g., when errors exceed `1` occurrence).
+5. Set the period (e.g., `1 minute`).
+
+---
+
+### **Step 5: Configure an SNS Topic for Email Notifications**
+1. Go to **AWS SNS (Simple Notification Service)**.
+2. Click **Create Topic** → **Standard**.
+3. Name the topic (e.g., `ErrorAlertsTopic`).
+4. Click **Create Subscription**, select **Email**, and enter your email address.
+5. Confirm the subscription via the email received.
+
+---
+
+### **Step 6: Attach SNS Notification to CloudWatch Alarm**
+1. Edit the **CloudWatch Alarm** created in Step 4.
+2. Under **Notification**, select **Send a notification to an SNS topic**.
+3. Choose the SNS topic created in Step 5 (`ErrorAlertsTopic`).
+4. Save the alarm.
+
+---
+
+## **3. Testing the Setup**
+- Manually insert an error message in logs and check if an email alert is received.
+- Monitor the alarm status in CloudWatch.
+
+---
+
+## **4. Conclusion**
+By setting up CloudWatch log monitoring and SNS notifications, you can automatically receive email alerts when errors appear in your application logs. This improves proactive monitoring and helps in quick issue resolution.
+
