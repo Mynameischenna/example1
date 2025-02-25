@@ -1,3 +1,56 @@
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (master)
+$ git pull origin main
+fatal: couldn't find remote ref main
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (master)
+$ git checkout -b branchb
+Switched to a new branch 'branchb'
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$ git push origin branchb
+Total 0 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+remote:
+remote: To create a merge request for branchb, visit:
+remote:   https://gitlab.retirementpartner.com/chnksv/ecm1/-/merge_requests/new?merge_request%5Bsource_branch%5D=branchb
+remote:
+To https://gitlab.retirementpartner.com/chnksv/ecm1.git
+ * [new branch]      branchb -> branchb
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$ git add .
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$ git commit -m "added into b"
+On branch branchb
+nothing to commit, working tree clean
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$ git push origin branchb
+Everything up-to-date
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$ git commit -m "added into b"
+On branch branchb
+nothing to commit, working tree clean
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$ git add .
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$ git commit -m "added into b"
+On branch branchb
+nothing to commit, working tree clean
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$ git push origin branchb
+Everything up-to-date
+
+IND+chnksv@appcompl04d MINGW64 /c/JAVA chenna/testgit/ecm1 (branchb)
+$
+
+
+
 Monitoring Stopped EC2 Instances with AWS EventBridge and Step Functions
 Objective:
 You want to monitor an EC2 instance using AWS EventBridge, trigger a Step Function when the instance stops, and then execute two Lambda functions:
