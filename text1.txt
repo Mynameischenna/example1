@@ -1,3 +1,16 @@
+public static void main(String[] args) {
+    System.setProperty("java.awt.headless", "false"); // Ensure GUI mode
+    SpringApplication.run(EcmApplication.class, args);
+    
+    SwingUtilities.invokeLater(() -> {
+        new FileSelectorGUI(); // Start GUI safely
+    });
+
+    System.out.println("Running...");
+}
+
+
+
 
 package com.ecm1.ECM1;
 
