@@ -1,3 +1,33 @@
+package com.ecm1.ECM1.controller;
+
+
+import com.ecm1.ECM1.service.Service1;
+//import com.ecm1.ECM1.ui.entity.ModelMain;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+public class ECMcontroller {
+
+    @Autowired
+    private Service1 service1;
+    
+    @PostMapping("/process-file")
+    public String processFiles(String inputExcelFile, String inputAllDir, String outputDir) {
+        try {
+            service1.processFilesAndCreateJson(inputExcelFile, inputAllDir, outputDir);
+            return "File processed and data saved successfully!";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Failed to process file: " + e.getMessage();
+        }
+    }
+}
+
+
+
 java.lang.NullPointerException: Cannot invoke "com.ecm1.ECM1.service.Service1.processFilesAndCreateJson(String, String, String)" because "this.service1" is null
 	at com.ecm1.ECM1.controller.ECMcontroller.processFiles(ECMcontroller.java:38)
 	at com.ecm1.ECM1.ui.FileSelectorGUI.runProcessing(FileSelectorGUI.java:85)
