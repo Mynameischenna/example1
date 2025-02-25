@@ -1,3 +1,39 @@
+package com.ecm1.ECM1;
+
+import com.ecm1.ECM1.controller.ECMcontroller;
+import com.ecm1.ECM1.ui.FileSelectorGUI;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+
+@SpringBootApplication
+public class Ecm1Application {
+
+    @Autowired
+    private ECMcontroller ecmController;
+
+
+    public static void main(String[] args) {
+        SpringApplication.run(Ecm1Application.class, args);
+
+        System.out.println("ECM Application is running!");
+    }
+
+    @PostConstruct
+    public void run() {
+        String filePath = "C:\\ECM\\PVR\\REPORT_2362_01DEC2023.xlsx";
+        FileSelectorGUI gui new FileSelectorGUI();
+        String result = ecmController.processFiles(filePath);
+        System.out.println(result);
+    }
+
+}
+
+
+
+
 Started Ecm1Application in 7.782 seconds (process running for 9.185)
 Exception in thread "main" java.awt.HeadlessException
 	at java.desktop/java.awt.GraphicsEnvironment.checkHeadless(GraphicsEnvironment.java:166)
