@@ -1,3 +1,129 @@
+package com.ecm1.ECM1.ui;
+
+import com.ecm1.ECM1.controller.ECMcontroller;
+import org.springframework.stereotype.Component;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+
+@Component
+public class FileSelectorGUI {
+
+    private File inputWorkingDir;
+    private File inputExcelFile;
+    private File inputAllDir;
+    private File outputReportFile;
+    private File outputDir;
+
+    private final ECMcontroller ecmController;
+
+    public FileSelectorGUI(ECMcontroller ecmController) {
+        this.ecmController = ecmController;
+
+        JFrame frame = new JFrame("File Selector");
+        frame.setSize(500, 300);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new GridLayout(7, 2, 10, 10));
+
+        JButton btnInputWorkingDir = new JButton("Select Input Working Directory");
+        JButton btnInputExcelFile = new JButton("Select Input Excel File");
+        JButton btnInputAllDir = new JButton("Select Input All Directory");
+        JButton btnOutputReportFile = new JButton("Select Output Report File");
+        JButton btnOutputDir = new JButton("Select Output Directory");
+
+        JButton btnRun = new JButton("Run");
+        JButton btnEnd = new JButton("End");
+        JButton btnAbout = new JButton("About");
+
+        btnInputWorkingDir.addActionListener(e -> inputWorkingDir = selectDirectory());
+        btnInputExcelFile.addActionListener(e -> inputExcelFile = selectFile());
+        btnInputAllDir.addActionListener(e -> inputAllDir = selectDirectory());
+        btnOutputReportFile.addActionListener(e -> outputReportFile = selectFile());
+        btnOutputDir.addActionListener(e -> outputDir = selectDirectory());
+
+        btnRun.addActionListener(e -> runProcessing());
+        btnEnd.addActionListener(e -> System.exit(0));
+        btnAbout.addActionListener(e -> showAboutInfo());
+
+        frame.add(btnInputWorkingDir);
+        frame.add(btnInputExcelFile);
+        frame.add(btnInputAllDir);
+        frame.add(btnOutputReportFile);
+        frame.add(btnOutputDir);
+        frame.add(btnRun);
+        frame.add(btnEnd);
+        frame.add(btnAbout);
+
+        frame.setVisible(true);
+    }
+
+    private File selectFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        int returnValue = fileChooser.showOpenDialog(null);
+        return (returnValue == JFileChooser.APPROVE_OPTION) ? fileChooser.getSelectedFile() : null;
+    }
+
+    private File selectDirectory() {
+        JFileChooser directoryChooser = new JFileChooser();
+        directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnValue = directoryChooser.showOpenDialog(null);
+        return (returnValue == JFileChooser.APPROVE_OPTION) ? directoryChooser.getSelectedFile() : null;
+    }
+
+    private void runProcessing() {
+        if (inputExcelFile != null && outputReportFile != null) {
+            String inputExcelPath = inputExcelFile.getAbsolutePath();
+            String outputReportPath = outputReportFile.getAbsolutePath();
+
+            String result = ecmController.processFiles(inputExcelPath, outputReportPath);
+            JOptionPane.showMessageDialog(null, "Processing complete: " + result);
+        } else {
+            JOptionPane.showMessageDialog(null, "Please select all required files before running.");
+        }
+    }
+
+    private void showAboutInfo() {
+        JOptionPane.showMessageDialog(null, "ECM File Selector GUI\nVersion 1.0\nDeveloped by Chenna.");
+    }
+
+    public File getInputWorkingDir() { return inputWorkingDir; }
+    public File getInputExcelFile() { return inputExcelFile; }
+    public File getInputAllDir() { return inputAllDir; }
+    public File getOutputReportFile() { return outputReportFile; }
+    public File getOutputDir() { return outputDir; }
+}
+
+package com.ecm1.ECM1;
+
+import com.ecm1.ECM1.ui.FileSelectorGUI;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import javax.swing.*;
+
+@SpringBootApplication
+public class Ecm1Application {
+
+    @Autowired
+    private FileSelectorGUI fileSelectorGUI;
+
+    public static void main(String[] args) {
+        System.setProperty("java.awt.headless", "false"); // Enable GUI mode
+        SpringApplication.run(Ecm1Application.class, args);
+        System.out.println("ECM Application is running...");
+    }
+
+    @javax.annotation.PostConstruct
+    public void run() {
+        SwingUtilities.invokeLater(() -> fileSelectorGUI);
+    }
+}
+
+
+
+
 
 package com.ecm1.ECM1;
 
