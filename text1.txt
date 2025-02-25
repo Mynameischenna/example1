@@ -1,3 +1,20 @@
+ @PostMapping("/process-file")
+    public String processFiles() {
+        try {
+            System.out.println("hello");
+            if(!data.areAllFieldsSet()){
+                System.out.println("fields are null");return "error";
+            }
+            System.out.println("file :"+ data.getInputExcelFile() + " dir "+data.getInputAllDir());
+            service1.processFilesAndCreateJson(data.getInputExcelFile(), data.getInputAllDir(), data.getOutputDir());
+            return "File processed and data saved successfully!";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Failed to process file: " + e.getMessage();
+        }
+    }
+}
+
 unning with:
 Input Working Dir: C:\ECM
 Input Excel File: C:\ECM\ecmdoc.xlsx
