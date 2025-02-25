@@ -5,6 +5,102 @@ import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.*;
+
+@Component
+public class FileSelectorGUI {
+
+    private String inputWorkingDir;
+    private String inputExcelFile;
+    private String inputAllDir;
+    private String outputReportFile;
+    private String outputDir;
+
+    private final ECMcontroller ecmController;
+
+    public FileSelectorGUI(ECMcontroller ecmController) {
+        this.ecmController = ecmController;
+
+        JFrame frame = new JFrame("File Selector");
+        frame.setSize(500, 300);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new GridLayout(7, 2, 10, 10));
+
+        JButton btnInputWorkingDir = new JButton("Select Input Working Directory");
+        JButton btnInputExcelFile = new JButton("Select Input Excel File");
+        JButton btnInputAllDir = new JButton("Select Input All Directory");
+        JButton btnOutputReportFile = new JButton("Select Output Report File");
+        JButton btnOutputDir = new JButton("Select Output Directory");
+
+        JButton btnRun = new JButton("Run");
+        JButton btnEnd = new JButton("End");
+        JButton btnAbout = new JButton("About");
+
+        btnInputWorkingDir.addActionListener(e -> inputWorkingDir = selectDirectory());
+        btnInputExcelFile.addActionListener(e -> inputExcelFile = selectFile());
+        btnInputAllDir.addActionListener(e -> inputAllDir = selectDirectory());
+        btnOutputReportFile.addActionListener(e -> outputReportFile = selectFile());
+        btnOutputDir.addActionListener(e -> outputDir = selectDirectory());
+
+        btnRun.addActionListener(e -> runProcessing());
+        btnEnd.addActionListener(e -> System.exit(0));
+        btnAbout.addActionListener(e -> showAboutInfo());
+
+        frame.add(btnInputWorkingDir);
+        frame.add(btnInputExcelFile);
+        frame.add(btnInputAllDir);
+        frame.add(btnOutputReportFile);
+        frame.add(btnOutputDir);
+        frame.add(btnRun);
+        frame.add(btnEnd);
+        frame.add(btnAbout);
+
+        frame.setVisible(true);
+    }
+
+    private String selectFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        int returnValue = fileChooser.showOpenDialog(null);
+        return (returnValue == JFileChooser.APPROVE_OPTION) ? fileChooser.getSelectedFile().getAbsolutePath() : null;
+    }
+
+    private String selectDirectory() {
+        JFileChooser directoryChooser = new JFileChooser();
+        directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnValue = directoryChooser.showOpenDialog(null);
+        return (returnValue == JFileChooser.APPROVE_OPTION) ? directoryChooser.getSelectedFile().getAbsolutePath() : null;
+    }
+
+    private void runProcessing() {
+        if (inputExcelFile != null && outputReportFile != null) {
+            String result = ecmController.processFiles(inputExcelFile, outputReportFile);
+            JOptionPane.showMessageDialog(null, "Processing complete: " + result);
+        } else {
+            JOptionPane.showMessageDialog(null, "Please select all required files before running.");
+        }
+    }
+
+    private void showAboutInfo() {
+        JOptionPane.showMessageDialog(null, "ECM File Selector GUI\nVersion 1.0\nDeveloped by Chenna.");
+    }
+
+    public String getInputWorkingDir() { return inputWorkingDir; }
+    public String getInputExcelFile() { return inputExcelFile; }
+    public String getInputAllDir() { return inputAllDir; }
+    public String getOutputReportFile() { return outputReportFile; }
+    public String getOutputDir() { return outputDir; }
+}
+
+
+
+
+
+package com.ecm1.ECM1.ui;
+
+import com.ecm1.ECM1.controller.ECMcontroller;
+import org.springframework.stereotype.Component;
+
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 
 @Component
