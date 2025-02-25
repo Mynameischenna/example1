@@ -1,3 +1,48 @@
+
+package com.ecm1.ECM1;
+
+import com.ecm1.ECM1.controller.ECMcontroller;
+import com.ecm1.ECM1.ui.FileSelectorGUI;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+
+@SpringBootApplication
+public class Ecm1Application {
+
+    @Autowired
+    private ECMcontroller ecmController;
+
+    public static void main(String[] args) {
+        System.setProperty("java.awt.headless", "false"); // Ensure GUI mode
+        SpringApplication.run(Ecm1Application.class, args);
+
+
+        System.out.println("Running...");
+    }
+    @PostConstruct
+    public void run() {
+
+        SwingUtilities.invokeLater(() -> {
+            new FileSelectorGUI(); // Start GUI safely
+        });
+        String filePath = "C:\\ECM\\PVR\\REPORT_2362_01DEC2023.xlsx";
+        String result = ecmController.processFiles();
+        System.out.println(result);
+    }
+
+
+}
+
+
+
+
+
 public static void main(String[] args) {
     System.setProperty("java.awt.headless", "false"); // Ensure GUI mode
     SpringApplication.run(EcmApplication.class, args);
