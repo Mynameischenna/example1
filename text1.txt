@@ -1,3 +1,100 @@
+package com.ecm;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+
+public class FileSelectorGUI {
+    private JFrame frame;
+    private JTextField inputWorkingDirField, inputExcelFileField, inputAllDirField, outputReportFileField, outputDirField;
+    private JButton runButton, endButton, aboutButton;
+
+    public FileSelectorGUI() {
+        frame = new JFrame("File & Directory Selector");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+        frame.setLayout(new GridLayout(7, 1));
+
+        // Creating file selection fields
+        inputWorkingDirField = addFileSelector("Input Working Directory:", true);
+        inputExcelFileField = addFileSelector("Input Excel File:", false);
+        inputAllDirField = addFileSelector("Input All Directory:", true);
+        outputReportFileField = addFileSelector("Output Report File:", false);
+        outputDirField = addFileSelector("Output Directory:", true);
+
+        // Buttons
+        JPanel buttonPanel = new JPanel();
+        runButton = new JButton("Run");
+        endButton = new JButton("End");
+        aboutButton = new JButton("About");
+
+        buttonPanel.add(runButton);
+        buttonPanel.add(endButton);
+        buttonPanel.add(aboutButton);
+        frame.add(buttonPanel);
+
+        // Button Actions
+        runButton.addActionListener(e -> System.out.println("running"));
+        endButton.addActionListener(e -> System.exit(0));
+        aboutButton.addActionListener(e -> JOptionPane.showMessageDialog(frame, "This tool processes files and generates reports."));
+
+        frame.setVisible(true);
+    }
+
+    private JTextField addFileSelector(String label, boolean isDirectory) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new FlowLayout());
+
+        JLabel jLabel = new JLabel(label);
+        JTextField textField = new JTextField(30);
+        JButton browseButton = new JButton("Browse");
+
+        browseButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileSelectionMode(isDirectory ? JFileChooser.DIRECTORIES_ONLY : JFileChooser.FILES_ONLY);
+            int option = fileChooser.showOpenDialog(frame);
+            if (option == JFileChooser.APPROVE_OPTION) {
+                textField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+            }
+        });
+
+        panel.add(jLabel);
+        panel.add(textField);
+        panel.add(browseButton);
+        frame.add(panel);
+
+        return textField;
+    }
+
+
+
+    // Getter methods to retrieve selected paths anytime
+    public String getInputWorkingDirectory() {
+        return inputWorkingDirField.getText();
+    }
+
+    public String getInputExcelFile() {
+        return inputExcelFileField.getText();
+    }
+
+    public String getInputAllDirectory() {
+        return inputAllDirField.getText();
+    }
+
+    public String getOutputReportFile() {
+        return outputReportFileField.getText();
+    }
+
+    public String getOutputDirectory() {
+        return outputDirField.getText();
+    }
+}
+
+
+
+
 Invoke-WebRequest -Uri "sandbox:/mnt/data/Cloudwatch_Email_Alerts.docx" -OutFile "C:\Users\YourUser\Downloads\Cloudwatch_Email_Alerts.docx"
 
 
