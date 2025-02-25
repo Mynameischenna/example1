@@ -1,3 +1,33 @@
+
+package com.ecm1.ECM1.ui;
+
+public class FileSelectionData {
+    private String inputWorkingDir;
+    private String inputExcelFile;
+    private String inputAllDir;
+    private String outputReportFile;
+    private String outputDir;
+
+    public String getInputWorkingDir() { return inputWorkingDir; }
+    public String getInputExcelFile() { return inputExcelFile; }
+    public String getInputAllDir() { return inputAllDir; }
+    public String getOutputReportFile() { return outputReportFile; }
+    public String getOutputDir() { return outputDir; }
+
+    public void setInputWorkingDir(String path) { this.inputWorkingDir = path; }
+    public void setInputExcelFile(String path) { this.inputExcelFile = path; }
+    public void setInputAllDir(String path) { this.inputAllDir = path; }
+    public void setOutputReportFile(String path) { this.outputReportFile = path; }
+    public void setOutputDir(String path) { this.outputDir = path; }
+
+    public boolean areAllFieldsSet() {
+        return inputWorkingDir != null && inputExcelFile != null &&
+               inputAllDir != null && outputReportFile != null && outputDir != null;
+    }
+}
+
+
+
 package com.ecm1.ECM1;
 
 import com.ecm1.ECM1.ui.FileSelectorGUI;
