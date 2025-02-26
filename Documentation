@@ -1,3 +1,96 @@
+
+package com.ecm1.ECM1.ui;
+
+import com.ecm1.ECM1.controller.ECMcontroller;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.swing.*;
+import java.awt.*;
+
+public class FileSelectorGUI {
+    private final FileSelectionData fileData;
+    private final ECMcontroller mcontroller;
+
+    public FileSelectorGUI(ECMcontroller mcontroller) {
+        this.mcontroller = mcontroller;
+        this.fileData = new FileSelectionData();
+
+        JFrame frame = new JFrame("File Selector");
+        frame.setSize(400, 300);
+        frame.setLayout(new GridLayout(6, 2));
+
+        JButton btnWorkingDir = new JButton("Select Working Directory");
+        JButton btnExcelFile = new JButton("Select Excel File");
+        JButton btnInputDir = new JButton("Select Input Directory");
+        JButton btnOutputReport = new JButton("Select Output Report File");
+        JButton btnOutputDir = new JButton("Select Output Directory");
+        JButton btnRun = new JButton("Run");
+
+        btnWorkingDir.addActionListener(e -> fileData.setInputWorkingDir(selectDirectory("Select Working Directory")));
+        btnExcelFile.addActionListener(e -> fileData.setInputExcelFile(selectFile("Select Excel File")));
+        btnInputDir.addActionListener(e -> fileData.setInputAllDir(selectDirectory("Select Input Directory")));
+        btnOutputReport.addActionListener(e -> fileData.setOutputReportFile(selectFile("Select Output Report File")));
+        btnOutputDir.addActionListener(e -> fileData.setOutputDir(selectDirectory("Select Output Directory")));
+
+        btnRun.addActionListener(e -> runProcessing());
+
+        frame.add(btnWorkingDir);
+        frame.add(btnExcelFile);
+        frame.add(btnInputDir);
+        frame.add(btnOutputReport);
+        frame.add(btnOutputDir);
+        frame.add(btnRun);
+
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
+    private String selectFile(String title) {
+        JFileChooser fileChooser = new JFileChooser("c:\\");
+        fileChooser.setDialogTitle(title);
+        int returnValue = fileChooser.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            return fileChooser.getSelectedFile().getAbsolutePath();
+        }
+        return null;
+    }
+
+    private String selectDirectory(String title) {
+        JFileChooser directoryChooser = new JFileChooser("c:\\");
+        directoryChooser.setDialogTitle(title);
+        directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnValue = directoryChooser.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            return directoryChooser.getSelectedFile().getAbsolutePath();
+        }
+        return null;
+    }
+
+    private void runProcessing() {
+        // Debugging: Print stored values
+        System.out.println("Running process with:");
+        System.out.println("Working Dir: " + fileData.getInputWorkingDir());
+        System.out.println("Excel File: " + fileData.getInputExcelFile());
+        System.out.println("Input Directory: " + fileData.getInputAllDir());
+        System.out.println("Output Report File: " + fileData.getOutputReportFile());
+        System.out.println("Output Directory: " + fileData.getOutputDir());
+
+        if (!fileData.areAllFieldsSet()) {
+            JOptionPane.showMessageDialog(null, "Error: Please select all required fields!");
+            return;
+        }
+
+        // Call controller method
+        String result = mcontroller.processFiles(fileData.getInputExcelFile(),fileData.getInputAllDir(), fileData.getOutputDir()
+        );
+
+        JOptionPane.showMessageDialog(null, result);
+    }
+}
+
+
+
+
 java.net.ConnectException: Connection timed out: connect
 	at java.base/sun.nio.ch.Net.connect0(Native Method)
 	at java.base/sun.nio.ch.Net.connect(Net.java:589)
