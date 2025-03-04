@@ -1,3 +1,124 @@
+
+package com.ecm1.ECM1.service;
+
+import com.ecm1.ECM1.entity.ModelMain;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+@Service
+public class CreateJsonForFiles {
+
+    public boolean createJsonForFile(File pdfFile, ModelMain metaData, String destinationDirPath) throws Exception {
+        String json = buildJsonFromMeta(metaData);
+        Path jsonFilePath = Paths.get(destinationDirPath, pdfFile.getName().replace(".pdf", ".json"));
+        Files.write(jsonFilePath, json.getBytes());
+        return true;
+    }
+
+    public boolean createAdvancedJsonForFile(File pdfFile, ModelMain metaData, String destinationDirPath) throws Exception {
+        String json = buildAdvancedJsonFromMeta(metaData, pdfFile.getName());
+        Path jsonFilePath = Paths.get(destinationDirPath, pdfFile.getName().replace(".pdf", ".json"));
+        Files.write(jsonFilePath, json.getBytes());
+        return true;
+    }
+
+    public String buildJsonFromMeta(ModelMain metaData) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonStructure jsonStructure = new JsonStructure();
+        jsonStructure.getPlan().setNumber(metaData.getPlanNumber());
+        jsonStructure.getPlan().setName(metaData.getPlanName());
+        jsonStructure.getPlan().setSource("401K");
+        jsonStructure.getDocument().setDocumentTypeCode("testdmtycode");
+        jsonStructure.getDocument().setCategory(metaData.getCategory());
+        return objectMapper.writeValueAsString(jsonStructure);
+    }
+
+    public String buildAdvancedJsonFromMeta(ModelMain metaData, String fileName) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        AdvancedJsonStructure jsonStructure = new AdvancedJsonStructure();
+        
+        jsonStructure.getPlan().setNumber(metaData.getPlanNumber());
+        jsonStructure.getPlan().setName(metaData.getPlanName());
+        jsonStructure.getPlan().setSource("401K");
+        
+        jsonStructure.getParticipant().setName(metaData.getMailingName());
+        jsonStructure.getParticipant().setIndividualId(metaData.getIndId());
+        jsonStructure.getParticipant().getSocialSecurity().setNumber(metaData.getSsn());
+        jsonStructure.getParticipant().getSocialSecurity().setNumberExtension(metaData.getSsnExt());
+        
+        jsonStructure.getDocument().setDocumentTypeCode("MMPRU");
+        jsonStructure.getDocument().setDocumentDetails("Regulatory");
+        jsonStructure.getDocument().setSourceSystem("MMPRU");
+        jsonStructure.getDocument().setCategory("PARTICIPANT CERTIFICATE");
+        jsonStructure.getDocument().setFileName(fileName.trim());
+        
+        return objectMapper.writeValueAsString(jsonStructure);
+    }
+
+    private static class JsonStructure {
+        private Plan plan = new Plan();
+        private Document document = new Document();
+        
+        public Plan getPlan() { return plan; }
+        public Document getDocument() { return document; }
+    }
+
+    private static class AdvancedJsonStructure {
+        private Plan plan = new Plan();
+        private Participant participant = new Participant();
+        private Document document = new Document();
+
+        public Plan getPlan() { return plan; }
+        public Participant getParticipant() { return participant; }
+        public Document getDocument() { return document; }
+    }
+
+    static class Plan {
+        private String number;
+        private String name;
+        private String source;
+        public void setNumber(String number) { this.number = number; }
+        public void setName(String name) { this.name = name; }
+        public void setSource(String source) { this.source = source; }
+    }
+
+    static class Participant {
+        private String name;
+        private String individualId;
+        private SocialSecurity socialSecurity = new SocialSecurity();
+        public void setName(String name) { this.name = name; }
+        public void setIndividualId(String individualId) { this.individualId = individualId; }
+        public SocialSecurity getSocialSecurity() { return socialSecurity; }
+    }
+
+    static class SocialSecurity {
+        private String number;
+        private String numberExtension;
+        public void setNumber(String number) { this.number = number; }
+        public void setNumberExtension(String numberExtension) { this.numberExtension = numberExtension; }
+    }
+
+    static class Document {
+        private String documentTypeCode;
+        private String documentDetails;
+        private String sourceSystem;
+        private String category;
+        private String fileName;
+        public void setDocumentTypeCode(String documentTypeCode) { this.documentTypeCode = documentTypeCode; }
+        public void setDocumentDetails(String documentDetails) { this.documentDetails = documentDetails; }
+        public void setSourceSystem(String sourceSystem) { this.sourceSystem = sourceSystem; }
+        public void setCategory(String category) { this.category = category; }
+        public void setFileName(String fileName) { this.fileName = fileName; }
+    }
+}
+
+
+
 package com.ecm1.ECM1.service;
 
 import com.ecm1.ECM1.entity.ModelMain;
