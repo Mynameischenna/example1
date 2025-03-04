@@ -1,3 +1,8 @@
+2025-03-04T06:46:49.828488100 | File: C:\ECM\PVR\PVR\REPORT_2362_01DEC2023.xlsx | Status: Failure | Error: 500 : "{"error":{"code":"E-000","message":"EADD_DOCUMENT_ERRORR: Error Exception:[class ErrorResponseErrorDetails {\n    field: addDocument\n    issue: ECMOperationsException in translateGenericHashToSpecificECMHash (translateGenericHashToSpecificECMHash Generic Field name in JSON Document (socialSecurityNumberExtension) is not valid for (plan))\n    location: body\n    hint: Please check the error details\n}]","details":[{"field":null,"issue":"EADD_DOCUMENT_ERRORR: Error Exception:[class ErrorResponseErrorDetails {\n    field: addDocument\n    issue: ECMOperationsException in translateGenericHashToSpecificECMHash (translateGenericHashToSpecificECMHash Generic Field name in JSON Document (socialSecurityNumberExtension) is not valid for (plan))\n    location: body\n    hint: Please check the error details\n}]","location":null,"hint":null}],"link":null,"correlationId":"67c704497963cfa977d479d12ffbbad1"}}"
+
+
+
+
 package com.ecm1.ECM1.service;
 
 import com.ecm1.ECM1.entity.ModelMain;
