@@ -1,3 +1,29 @@
+{
+  "plan": {
+  	"number": "12345-01",				- PLAN_NUMBER
+  	"name": "ABC Corporation, Inc",		- PLAN_NAME
+   	"source": "401K"				- DATABASE
+},
+  "participant": {
+   	"name": "John P Smith",			- MAILING_NAME
+    	"individualId": "123456789",			- IND_ID
+    	"socialSecurity": {				
+      		"number": "123456789",		- SSN
+      		"numberExtension": "3"			- SSN_EXT
+    	}
+  },
+  "document": {
+  	"documentTypeCode": "MMPRU",		- Hard Coded
+  	"documentDetails": "Regulatory",		- Hard Coded
+  	"sourceSystem\": \"" + "MMPRU", 		- Hard Coded
+  	"category": "PARTICIPANT CERTIFICATE",	- Hard Coded
+  	"fileName\": fileName.trim() 			- File Name – no directory
+    }
+}
+
+
+
+
 package com.ecm1.ECM1.ui;
 
 import com.ecm1.ECM1.controller.ECMcontroller;
