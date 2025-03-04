@@ -1,3 +1,103 @@
+
+/documents
+REST method DELETE  – removes/purges a single document from the ECM system
+
+The Delete requires either:
+
+ athe Token obtained from the documents-list REST request
+the Id for OnBase or Id and ObjectStore for FileNet
+Delete a document from FileNet requires the GUID(no curly braces) and the Object store
+
+/documents?id=31BA4900-86A4-427B-9855-2A6CBB6685DE&legacyStorageArea=FASCORE_OS
+
+Delete a document from OnBase  requires only the OnBase document handle
+
+/documents?id=757436580
+
+Delete with a token
+
+/documents?token=abc123efg456
+
+Example Response for OnBase
+
+{    
+
+"id": "76014794"
+
+}
+
+Example Response for FileNet GUID plus ObjectStore
+
+{
+
+"id": "ABC123-445-ABC123 FASCORE_OS"
+
+}
+
+
+    boolean status;
+    public ResponseEntity<String> sendPostScanSheets(ModelMain currCell, File file) throws Exception {
+        status = true;
+
+        String authorizationID = auth.getAuthorizationID();
+        System.out.println("done auth id is "+authorizationID);
+        String url = "";
+        if (runType.equals(("PROD"))) {
+            url = "https://api.gwl.com/content-management/ecm-documents-api/documents";
+        } else if (runType.equals(("DEV"))) {
+            url = "https://api-dev.gwl.com/content-management/ecm-documents-api/documents";
+        }
+
+//        // Get the file associated with the plan number
+//        File file = getPdfFile(currCell.getPlanNumber());
+        if (file == null || !file.exists()) {
+            throw new Exception("File not found for plan number: " + currCell.getPlanNumber());
+        }
+
+        // Read file content into a byte array
+        byte[] fileContent = Files.readAllBytes(file.toPath());
+
+        // Prepare document metadata
+        String docuData = createJson.buildJsonFromMeta(currCell);
+
+        System.out.println(docuData);
+
+        // Use ByteArrayResource for file content
+        ByteArrayResource resource = new ByteArrayResource(fileContent) {
+            @Override
+            public String getFilename() {
+                return file.getName(); // Set the file name
+            }
+        };
+
+        // Set up the request body
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", resource); // Add PDF file content
+        body.add("typeOfDocument", "participant"); // ra
+        body.add("mimeType", "application/pdf");
+        body.add("documentProperties", docuData); // Add metadata as JSON
+
+        // Set up headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.add("Authorization", "JWT " + authorizationID);
+
+        // Create the HTTP entity
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        // Use RestTemplate to make the POST request
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+        // Print response details
+        System.out.println("Response status: " + response.getStatusCode());
+        System.out.println("Response body: " + response.getBody());
+
+        return response;
+    }
+
+
+
 2025-03-04T06:46:49.828488100 | File: C:\ECM\PVR\PVR\REPORT_2362_01DEC2023.xlsx | Status: Failure | Error: 500 : "{"error":{"code":"E-000","message":"EADD_DOCUMENT_ERRORR: Error Exception:[class ErrorResponseErrorDetails {\n    field: addDocument\n    issue: ECMOperationsException in translateGenericHashToSpecificECMHash (translateGenericHashToSpecificECMHash Generic Field name in JSON Document (socialSecurityNumberExtension) is not valid for (plan))\n    location: body\n    hint: Please check the error details\n}]","details":[{"field":null,"issue":"EADD_DOCUMENT_ERRORR: Error Exception:[class ErrorResponseErrorDetails {\n    field: addDocument\n    issue: ECMOperationsException in translateGenericHashToSpecificECMHash (translateGenericHashToSpecificECMHash Generic Field name in JSON Document (socialSecurityNumberExtension) is not valid for (plan))\n    location: body\n    hint: Please check the error details\n}]","location":null,"hint":null}],"link":null,"correlationId":"67c704497963cfa977d479d12ffbbad1"}}"
 
 
