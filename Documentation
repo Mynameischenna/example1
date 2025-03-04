@@ -1,3 +1,6 @@
+2025-03-04T06:31:49.642027700 | File: C:\ECM\PVR\PVR\REPORT_2362_01DEC2023.xlsx | Status: Failure | Error: No serializer found for class com.ecm1.ECM1.service.CreateJsonForFiles$Plan and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS) (through reference chain: com.ecm1.ECM1.service.CreateJsonForFiles$AdvancedJsonStructure["plan"])
+
+
 
 package com.ecm1.ECM1.service;
 
