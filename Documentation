@@ -1,3 +1,172 @@
+package com.ecm1.ECM1.service;
+
+import com.ecm1.ECM1.entity.ModelMain;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+@Service
+public class CreateJsonForFiles {
+
+    // Create a JSON file for the given PDF file using its metadata
+    public boolean createJsonForFile(File pdfFile, ModelMain metaData, String destinationDirPath) throws Exception {
+        // Build the metadata JSON in the new format
+        String json = buildJsonFromMeta(metaData);
+
+        // Get the path for the new JSON file (with .json extension)
+        Path jsonFilePath = Paths.get(destinationDirPath, pdfFile.getName().replace(".pdf", ".json"));
+
+        // Write the JSON to the file
+        Files.write(jsonFilePath, json.getBytes());
+        return true;
+    }
+
+    // Convert the ModelMain metadata to JSON in the new format
+    public String buildJsonFromMeta(ModelMain metaData) throws Exception {
+        // Create an ObjectMapper (from Jackson) for JSON conversion
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS); // Prevent empty bean error
+
+        // Create the new structured JSON object
+        AdvancedJsonStructure jsonStructure = new AdvancedJsonStructure();
+
+        // Populate the "plan" part
+        jsonStructure.getPlan().setNumber(metaData.getPlanNumber());
+        jsonStructure.getPlan().setName(metaData.getPlanName());
+        jsonStructure.getPlan().setSource("401K");
+
+        // Populate the "participant" part
+        jsonStructure.getParticipant().setName("John P Smith"); // Example value
+        jsonStructure.getParticipant().setIndividualId("123456789");
+        jsonStructure.getParticipant().getSocialSecurity().setNumber("123456789");
+        jsonStructure.getParticipant().getSocialSecurity().setNumberExtension("3");
+
+        // Populate the "document" part
+        jsonStructure.getDocument().setDocumentTypeCode("MMPRU");
+        jsonStructure.getDocument().setDocumentDetails("Regulatory");
+        jsonStructure.getDocument().setSourceSystem("MMPRU");
+        jsonStructure.getDocument().setCategory("PARTICIPANT CERTIFICATE");
+        jsonStructure.getDocument().setFileName("example.pdf");
+
+        // Convert the object to a JSON string
+        return objectMapper.writeValueAsString(jsonStructure);
+    }
+
+    // Class to represent the new JSON structure
+    public static class AdvancedJsonStructure {
+        private Plan plan = new Plan();
+        private Participant participant = new Participant();
+        private Document document = new Document();
+
+        public Plan getPlan() { return plan; }
+        public void setPlan(Plan plan) { this.plan = plan; }
+
+        public Participant getParticipant() { return participant; }
+        public void setParticipant(Participant participant) { this.participant = participant; }
+
+        public Document getDocument() { return document; }
+        public void setDocument(Document document) { this.document = document; }
+    }
+
+    // Inner class for "plan" structure
+    public static class Plan {
+        @JsonProperty("number")
+        private String number;
+
+        @JsonProperty("name")
+        private String name;
+
+        @JsonProperty("source")
+        private String source;
+
+        public String getNumber() { return number; }
+        public void setNumber(String number) { this.number = number; }
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public String getSource() { return source; }
+        public void setSource(String source) { this.source = source; }
+    }
+
+    // Inner class for "participant" structure
+    public static class Participant {
+        @JsonProperty("name")
+        private String name;
+
+        @JsonProperty("individualId")
+        private String individualId;
+
+        @JsonProperty("socialSecurity")
+        private SocialSecurity socialSecurity = new SocialSecurity();
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public String getIndividualId() { return individualId; }
+        public void setIndividualId(String individualId) { this.individualId = individualId; }
+
+        public SocialSecurity getSocialSecurity() { return socialSecurity; }
+        public void setSocialSecurity(SocialSecurity socialSecurity) { this.socialSecurity = socialSecurity; }
+    }
+
+    // Inner class for "socialSecurity" structure
+    public static class SocialSecurity {
+        @JsonProperty("number")
+        private String number;
+
+        @JsonProperty("numberExtension")
+        private String numberExtension;
+
+        public String getNumber() { return number; }
+        public void setNumber(String number) { this.number = number; }
+
+        public String getNumberExtension() { return numberExtension; }
+        public void setNumberExtension(String numberExtension) { this.numberExtension = numberExtension; }
+    }
+
+    // Inner class for "document" structure
+    public static class Document {
+        @JsonProperty("documentTypeCode")
+        private String documentTypeCode;
+
+        @JsonProperty("documentDetails")
+        private String documentDetails;
+
+        @JsonProperty("sourceSystem")
+        private String sourceSystem;
+
+        @JsonProperty("category")
+        private String category;
+
+        @JsonProperty("fileName")
+        private String fileName;
+
+        public String getDocumentTypeCode() { return documentTypeCode; }
+        public void setDocumentTypeCode(String documentTypeCode) { this.documentTypeCode = documentTypeCode; }
+
+        public String getDocumentDetails() { return documentDetails; }
+        public void setDocumentDetails(String documentDetails) { this.documentDetails = documentDetails; }
+
+        public String getSourceSystem() { return sourceSystem; }
+        public void setSourceSystem(String sourceSystem) { this.sourceSystem = sourceSystem; }
+
+        public String getCategory() { return category; }
+        public void setCategory(String category) { this.category = category; }
+
+        public String getFileName() { return fileName; }
+        public void setFileName(String fileName) { this.fileName = fileName; }
+    }
+}
+
+
+
 2025-03-04T06:31:49.642027700 | File: C:\ECM\PVR\PVR\REPORT_2362_01DEC2023.xlsx | Status: Failure | Error: No serializer found for class com.ecm1.ECM1.service.CreateJsonForFiles$Plan and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS) (through reference chain: com.ecm1.ECM1.service.CreateJsonForFiles$AdvancedJsonStructure["plan"])
 
 
